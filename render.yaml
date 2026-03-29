@@ -7,13 +7,14 @@
 buildCommand = "pip install -r requirements.txt"
 
 # Start Command (run to start the app)
-startCommand = "python app.py"
+startCommand = "gunicorn wsgi:app"
 
 # Environment Variables to set in Render dashboard:
-# PORT - Automatically set by Render
+# PORT - Automatically set by Render (default 10000)
 # DEBUG - Set to "false" for production
 # ADMIN_EMAIL - Your admin email
 # ADMIN_PASSWORD - Your admin password
+# FLASK_ENV - Set to "production"
 
 # Python Version
 pythonVersion = "3.9"
