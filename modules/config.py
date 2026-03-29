@@ -35,8 +35,8 @@ INTERVIEW_DURATION_SECONDS = 15 * 60  # 15 minutes
 MAX_ATTEMPTS = 3
 
 # Admin credentials (from environment or defaults)
-ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@example.com")
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "chennakesava.edu.7@gmail.com")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "Royalreddy@1431@")
 
 # Socket.IO settings
 CORS_ALLOWED_ORIGINS = "*"
