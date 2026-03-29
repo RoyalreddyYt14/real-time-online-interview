@@ -143,7 +143,72 @@ Modify settings in `modules/config.py`:
 - Admin role validation
 - Proctoring with face detection
 
-## 🐛 Troubleshooting
+## � Deployment
+
+### Railway (Recommended - Easiest)
+
+1. **Create Railway Account**: Go to [railway.app](https://railway.app) and sign up
+2. **Connect GitHub**: Link your GitHub account
+3. **Deploy from GitHub**:
+   - Click "New Project" → "Deploy from GitHub repo"
+   - Select your `real-time-online-interview` repository
+   - Railway will automatically detect Python and deploy
+4. **Set Environment Variables**:
+   - Go to your project → Variables
+   - Add: `DEBUG=false`
+   - Add: `ADMIN_EMAIL=your-admin@example.com`
+   - Add: `ADMIN_PASSWORD=your-secure-password`
+5. **Get Your URL**: Railway provides a `*.up.railway.app` domain
+
+### Render (Alternative)
+
+1. **Create Render Account**: Go to [render.com](https://render.com) and sign up
+2. **Connect GitHub**: Link your GitHub repository
+3. **Create Web Service**:
+   - Click "New" → "Web Service"
+   - Connect your GitHub repo
+   - Set build command: `pip install -r requirements.txt`
+   - Set start command: `python app.py`
+4. **Environment Variables**:
+   - `DEBUG=false`
+   - `ADMIN_EMAIL=your-admin@example.com`
+   - `ADMIN_PASSWORD=your-secure-password`
+5. **Deploy**: Render provides a `*.onrender.com` domain
+
+### Heroku (Advanced)
+
+1. **Install Heroku CLI**: Download from [heroku.com](https://heroku.com)
+2. **Login and Create App**:
+   ```bash
+   heroku login
+   heroku create your-app-name
+   ```
+3. **Deploy**:
+   ```bash
+   git push heroku master
+   ```
+4. **Set Environment Variables**:
+   ```bash
+   heroku config:set DEBUG=false
+   heroku config:set ADMIN_EMAIL=your-admin@example.com
+   heroku config:set ADMIN_PASSWORD=your-secure-password
+   ```
+
+### Local Testing Before Deployment
+
+Test your app works in production mode:
+
+```bash
+# Set production environment
+export DEBUG=false
+export ADMIN_EMAIL=admin@example.com
+export ADMIN_PASSWORD=admin123
+
+# Run the app
+python app.py
+```
+
+## �🐛 Troubleshooting
 
 ### Common Issues:
 

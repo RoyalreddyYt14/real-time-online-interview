@@ -1,0 +1,19 @@
+# Railway Deployment Configuration
+
+# This file tells Railway how to deploy your Flask app
+# Railway automatically detects Python apps and uses this configuration
+
+[build]
+builder = "python"
+
+[deploy]
+startCommand = "python app.py"
+healthcheckPath = "/"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+# Environment variables (set these in Railway dashboard)
+# PORT - Automatically set by Railway
+# DEBUG - Set to "false" for production
+# ADMIN_EMAIL - Your admin email
+# ADMIN_PASSWORD - Your admin password

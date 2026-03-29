@@ -1,0 +1,22 @@
+# Render Deployment Configuration
+
+# This file tells Render how to deploy your Flask app
+# Render automatically detects Python apps
+
+# Build Command (run during build)
+buildCommand = "pip install -r requirements.txt"
+
+# Start Command (run to start the app)
+startCommand = "python app.py"
+
+# Environment Variables to set in Render dashboard:
+# PORT - Automatically set by Render
+# DEBUG - Set to "false" for production
+# ADMIN_EMAIL - Your admin email
+# ADMIN_PASSWORD - Your admin password
+
+# Python Version
+pythonVersion = "3.9"
+
+# Health Check
+healthCheckPath = "/"
