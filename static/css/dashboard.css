@@ -1,0 +1,219 @@
+body{
+margin:0;
+font-family:'Segoe UI',sans-serif;
+background:linear-gradient(180deg,#0b2c4d 0%, #06152d 100%);
+color:#e6eef7;
+
+}
+
+/* 🔥 LOADER */
+#loader{
+position:fixed;
+width:100%;
+height:100%;
+background:white;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+z-index:9999;
+}
+
+.spinner{
+width:50px;
+height:50px;
+border:5px solid #ddd;
+border-top:5px solid #2563eb;
+border-radius:50%;
+animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+100%{transform:rotate(360deg);}
+}
+
+/* HEADER */
+.header{
+height:70px;
+background:linear-gradient(90deg,#0b2c4d,#001f3f);
+color:white;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:0 25px;
+}
+/*progress bar*/
+.progress-bar{
+    transition: width 1.5s ease-in-out;
+}
+
+.step{
+    opacity:0;
+    transform:translateY(10px);
+    animation:fadeUp 0.6s forwards;
+}
+
+.step:nth-child(1){animation-delay:0.2s;}
+.step:nth-child(2){animation-delay:0.4s;}
+.step:nth-child(3){animation-delay:0.6s;}
+.step:nth-child(4){animation-delay:0.8s;}
+
+@keyframes fadeUp{
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+/* SIDEBAR */
+.sidebar{
+position:fixed;
+top:70px;
+left:0;
+width:230px;
+height:100%;
+background:#021c35;
+padding-top:15px;
+}
+
+.sidebar a{
+display:flex;
+align-items:center;
+gap:12px;
+color:#cfd8e3;
+padding:12px 18px;
+margin:6px 10px;
+border-radius:10px;
+text-decoration:none;
+}
+
+.sidebar a:hover,
+.sidebar a.active{
+background:#2a5d8f;
+color:white;
+}
+
+/* CONTENT */
+.content{
+margin-left:230px;
+padding:25px;
+}
+
+/* CARD */
+.card{
+border:none;
+border-radius:15px;
+box-shadow:0 6px 18px rgba(0,0,0,0.08);
+background:#ffffff;
+/* Padding is controlled by Bootstrap utility classes like `p-3`. */
+padding:0;
+color:#0b2c4d;
+}
+
+/* IMAGE */
+.face-img{
+width:100%;
+height:260px;
+object-fit:contain;
+background:#000;
+border-radius:12px;
+}
+
+/* BADGE */
+.status-badge{
+position:absolute;
+bottom:10px;
+right:10px;
+background:#28a745;
+color:white;
+border-radius:50%;
+padding:8px;
+}
+
+/* STEP */
+.step{
+display:flex;
+align-items:center;
+gap:10px;
+margin-bottom:10px;
+font-size:14px;
+}
+
+/* TIMER */
+.timer{
+background:#ffeaea;
+padding:5px 10px;
+border-radius:6px;
+color:red;
+font-weight:bold;
+}
+
+/* BUTTON */
+.btn{
+border-radius:10px;
+font-weight:500;
+}
+
+.btn-primary{
+background:#2563eb;
+border:none;
+}
+
+.btn-primary:hover{
+background:#1d4ed8;
+}
+
+ul li{
+margin-bottom:6px;
+font-size:14px;
+}
+
+.rt-page-intro{
+    margin: 0 auto 18px;
+    padding: 14px 16px;
+    width: fit-content;
+    max-width: 100%;
+    border-radius: var(--rt-radius, 14px);
+    background: rgba(37,99,235,0.14);
+    border: 1px solid rgba(37,99,235,0.25);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.10);
+    color: #e6eef7;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+}
+
+.btn{
+    transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.btn:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 14px 35px rgba(0,0,0,0.18);
+}
+
+@media (max-width: 768px){
+    .sidebar{
+        position: sticky;
+        top: 70px;
+        width: 100%;
+        height: auto;
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding: 10px 12px;
+        border-bottom-left-radius: 16px;
+        border-bottom-right-radius: 16px;
+    }
+    .sidebar a{
+        margin: 0;
+        padding: 10px 14px;
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+    .content{
+        margin-left: 0;
+        padding: 18px 14px;
+    }
+    .header{
+        padding: 0 14px;
+    }
+}

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Aptitude Test</title>
+
+<style>
+body{
+font-family:Segoe UI, system-ui, -apple-system, Arial, sans-serif;
+background:linear-gradient(180deg,#0b2c4d 0%, #06152d 100%);
+color:#e6eef7;
+padding:60px 16px;
+min-height:100vh;
+}
+
+.container{
+background:rgba(255,255,255,0.06);
+padding:30px;
+border-radius:16px;
+max-width:800px;
+margin:auto;
+border:1px solid rgba(255,255,255,0.14);
+backdrop-filter: blur(12px);
+ -webkit-backdrop-filter: blur(12px);
+box-shadow:0 18px 60px rgba(0,0,0,0.35);
+animation: rtIn 280ms ease-out both;
+}
+
+.timer{
+color:#fbbf24;
+font-size:20px;
+font-weight:bold;
+}
+
+@keyframes rtIn{
+  from{opacity:0; transform: translateY(8px) scale(0.99);}
+  to{opacity:1; transform: translateY(0) scale(1);}
+}
+
+button{
+padding:10px 20px;
+background:#0b5ed7;
+color:white;
+border:none;
+border-radius:12px;
+cursor:pointer;
+transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+button:hover{
+  transform: translateY(-2px);
+  box-shadow:0 14px 35px rgba(0,0,0,0.25);
+  background:#2563eb;
+}
+</style>
+
+</head>
+
+<body>
+{% include 'base.html' %}
+
+<div class="container">
+
+<h2>Aptitude Test</h2>
+
+<div class="timer" id="timer">
+Time Left: 15:00
+</div>
+<div id="formMsg" style="color:#dc3545;font-weight:700;margin-top:10px;"></div>
+
+<hr>
+
+<form method="POST" action="/aptitude" id="quizForm">
+
+<p><b>Question:</b></p>
+
+<p>
+If a train travels 60 km in 1 hour, how far will it travel in 2.5 hours?
+</p>
+
+<label><input type="radio" name="q1" value="120"> 120 km</label><br>
+<label><input type="radio" name="q1" value="150"> 150 km</label><br>
+<label><input type="radio" name="q1" value="180"> 180 km</label><br>
+<label><input type="radio" name="q1" value="200"> 200 km</label><br>
+
+<input type="hidden" name="score" id="scoreInput">
+
+<br><br>
+
+<button type="button" onclick="submitTest()">Submit Answer</button>
+
+</form>
+
+</div>
+
+<script>
+
+// ✅ Correct Answer
+const correctAnswer = "150";
+
+// ✅ Submit Logic
+function submitTest(){
+
+let selected = document.querySelector('input[name="q1"]:checked');
+
+if(!selected){
+const msgEl = document.getElementById("formMsg");
+if (msgEl) msgEl.textContent = "Please select an answer.";
+return;
+}
+
+let score = 0;
+
+if(selected.value === correctAnswer){
+score = 10;
+}
+
+document.getElementById("scoreInput").value = score;
+
+// Submit form
+document.getElementById("quizForm").submit();
+}
+
+// ✅ Timer
+let time = 900; // 15 min
+
+setInterval(function(){
+
+let minutes = Math.floor(time / 60);
+let seconds = time % 60;
+
+document.getElementById("timer").innerText =
+"Time Left: " + minutes + ":" + (seconds < 10 ? "0"+seconds : seconds);
+
+time--;
+
+if(time <= 0){
+submitTest();
+}
+
+},1000);
+
+
+</script>
+
+</body>
+</html>

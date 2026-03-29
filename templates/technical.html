@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Technical Round</title>
+<style>
+body{
+    font-family:Segoe UI, system-ui, -apple-system, Arial, sans-serif;
+    background:linear-gradient(180deg,#0b2c4d 0%, #06152d 100%);
+    color:#e6eef7;
+    padding:60px 16px;
+    min-height:100vh;
+}
+.container{
+    background:rgba(255,255,255,0.06);
+    padding:30px;
+    border-radius:16px;
+    max-width:800px;
+    margin:auto;
+    border:1px solid rgba(255,255,255,0.14);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow:0 18px 60px rgba(0,0,0,0.35);
+    animation: rtIn 280ms ease-out both;
+}
+button{
+    padding:10px 20px;
+    background:#2563eb;
+    color:white;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+    transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+button:hover{
+    transform: translateY(-2px);
+    box-shadow:0 14px 35px rgba(0,0,0,0.25);
+    background:#1d4ed8;
+}
+
+@keyframes rtIn{
+  from{opacity:0; transform: translateY(8px) scale(0.99);}
+  to{opacity:1; transform: translateY(0) scale(1);}
+}
+</style>
+</head>
+<body>
+{% include 'base.html' %}
+<div class="container">
+    <h2>Technical Interview</h2>
+    <div id="techMsg" style="color:#dc3545;font-weight:700;margin-bottom:12px;"></div>
+    <form method="POST" action="/technical" id="techForm">
+        <p><b>Questions:</b></p>
+        <ul>
+            {% for question in questions %}
+            <li style="margin-bottom:15px;">
+                <div><b>Q{{ loop.index }}:</b> {{ question }}</div>
+                <textarea name="answer_{{ loop.index0 }}" id="answer_{{ loop.index0 }}" rows="5" cols="80" required></textarea>
+            </li>
+            {% endfor %}
+        </ul>
+        <input type="hidden" name="score" id="scoreInput">
+        <br>
+        <button type="button" onclick="submitAnswer()">Submit Answer</button>
+    </form>
+</div>
+<script>
+// ✅ Keywords for scoring - you can customize based on the domain
+const keywords = ["class","object","inheritance","polymorphism","encapsulation","abstraction"];
+function submitAnswer(){
+    // Collect all textareas' answers
+    const textareas = Array.from(document.querySelectorAll("textarea[id^='answer_']"));
+    let score = 0;
+    let allFilled = true;
+
+    textareas.forEach(area => {
+        let answer = area.value.toLowerCase().trim();
+        if(answer === ""){
+            allFilled = false;
+        }
+        keywords.forEach(word => {
+            if(answer.includes(word)){
+                score += 3;
+            }
+        });
+    });
+
+    if(!allFilled){
+        const msgEl = document.getElementById("techMsg");
+        if (msgEl) msgEl.textContent = "Please answer all questions.";
+        return;
+    }
+
+    // max score limit per question (e.g., 20 per question)
+    let maxScore = textareas.length * 20;
+    if(score > maxScore) score = maxScore;
+
+    document.getElementById("scoreInput").value = score;
+    document.getElementById("techForm").submit();
+}
+
+</script>
+</body>
+</html>

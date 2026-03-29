@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Face Verification</title>
+
+<style>
+
+body{
+font-family: Arial;
+text-align:center;
+background:#f4f6f9;
+margin-top:80px;
+}
+
+h2{
+color:#0b2c4d;
+}
+
+.info{
+margin-top:20px;
+font-size:18px;
+color:#333;
+}
+
+.status{
+margin-top:30px;
+font-weight:bold;
+color:#2a7a2a;
+font-size:18px;
+}
+
+.loader{
+margin-top:40px;
+border:8px solid #f3f3f3;
+border-top:8px solid #0b2c4d;
+border-radius:50%;
+width:60px;
+height:60px;
+animation:spin 1s linear infinite;
+margin-left:auto;
+margin-right:auto;
+}
+
+@keyframes spin{
+0%{transform:rotate(0deg);}
+100%{transform:rotate(360deg);}
+}
+
+</style>
+
+</head>
+
+<body>
+{% include 'base.html' %}
+
+<h2>Face Verification</h2>
+
+<p class="info">
+Please look at the system camera for identity verification.
+</p>
+
+<div class="loader"></div>
+
+<div class="status" id="statusText">
+Opening camera for face detection...
+</div>
+
+<p style="margin-top:40px;color:#777;">
+Do not move away from the camera.
+</p>
+
+<script>
+
+// Auto update message after few seconds
+setTimeout(() => {
+    document.getElementById("statusText").innerText =
+    "Verifying your face... Please wait.";
+}, 3000);
+
+</script>
+
+</body>
+
+</html>

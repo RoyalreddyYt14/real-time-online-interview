@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Coding Test</title>
+
+<style>
+body{
+font-family:Segoe UI, system-ui, -apple-system, Arial, sans-serif;
+background:linear-gradient(180deg,#0b2c4d 0%, #06152d 100%);
+color:#e6eef7;
+padding:60px 16px;
+min-height:100vh;
+}
+
+.container{
+background:rgba(255,255,255,0.06);
+padding:30px;
+border-radius:16px;
+max-width:900px;
+margin:auto;
+border:1px solid rgba(255,255,255,0.14);
+backdrop-filter: blur(12px);
+ -webkit-backdrop-filter: blur(12px);
+box-shadow:0 18px 60px rgba(0,0,0,0.35);
+animation: rtIn 280ms ease-out both;
+}
+
+textarea{
+width:100%;
+font-family:monospace;
+}
+
+button{
+padding:10px 20px;
+background:#2563eb;
+color:white;
+border:none;
+border-radius:12px;
+cursor:pointer;
+transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+button:hover{
+  transform: translateY(-2px);
+  box-shadow:0 14px 35px rgba(0,0,0,0.25);
+  background:#1d4ed8;
+}
+
+@keyframes rtIn{
+  from{opacity:0; transform: translateY(8px) scale(0.99);}
+  to{opacity:1; transform: translateY(0) scale(1);}
+}
+</style>
+
+</head>
+
+<body>
+{% include 'base.html' %}
+
+<div class="container">
+
+<h2>Coding Challenge</h2>
+<div id="codeMsg" style="color:#dc3545;font-weight:700;margin-bottom:12px;"></div>
+
+<form method="POST" action="/coding" id="codeForm">
+
+<p><b>Question:</b></p>
+<p>Write a Python program to reverse a string.</p>
+
+<textarea name="code" id="code" rows="12" placeholder="Write your code here" required></textarea>
+
+<input type="hidden" name="score" id="scoreInput">
+
+<br><br>
+
+<button type="button" onclick="submitCode()">Submit Code</button>
+
+</form>
+
+</div>
+
+<script>
+
+// ✅ Keywords to check logic
+const keywords = ["reverse", "[::-1]", "for", "while"];
+
+// ✅ Submit Logic
+function submitCode(){
+
+let code = document.getElementById("code").value.toLowerCase();
+
+if(code.trim() === ""){
+const msgEl = document.getElementById("codeMsg");
+if (msgEl) msgEl.textContent = "Please write your code.";
+return;
+}
+
+let score = 0;
+
+// basic evaluation
+keywords.forEach(word => {
+if(code.includes(word)){
+score += 5;
+}
+});
+
+// limit max score
+if(score > 30) score = 30;
+
+document.getElementById("scoreInput").value = score;
+
+// submit form
+document.getElementById("codeForm").submit();
+}
+
+
+</script>
+
+</body>
+</html>

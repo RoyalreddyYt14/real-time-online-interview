@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>HR Interview (Voice)</title>
+    <style>
+      body {
+        font-family: Segoe UI, system-ui, -apple-system, Arial, sans-serif;
+        background: radial-gradient(
+            1200px 600px at 10% 10%,
+            rgba(139,92,246,0.35) 0%,
+            rgba(59,130,246,0.18) 35%,
+            rgba(2,6,23,0) 70%
+          ),
+          linear-gradient(135deg, #06142c 0%, #2b1055 40%, #0b2c4d 100%);
+        margin: 0;
+        padding: 0;
+        color: #e6eef7;
+      }
+
+      .hr-wrap {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 90px 16px 24px;
+      }
+
+      .hr-card {
+        width: min(920px, 100%);
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 20px 80px rgba(0, 0, 0, 0.45);
+        border-radius: 18px;
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        overflow: hidden;
+        transform: translateY(8px);
+        animation: hrIn 260ms ease-out forwards;
+      }
+
+      @keyframes hrIn {
+        to {
+          transform: translateY(0);
+        }
+      }
+
+      .hr-header {
+        padding: 18px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+        background: linear-gradient(
+          90deg,
+          rgba(37, 99, 235, 0.25) 0%,
+          rgba(139, 92, 246, 0.20) 60%,
+          rgba(34, 197, 94, 0.10) 100%
+        );
+      }
+
+      .hr-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 900;
+        letter-spacing: 0.2px;
+      }
+
+      .hr-body {
+        padding: 18px 20px 22px;
+      }
+
+      .hr-grid {
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 14px;
+      }
+
+      @media (max-width: 860px) {
+        .hr-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .hr-panel {
+        background: rgba(2, 6, 23, 0.30);
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        border-radius: 14px;
+        padding: 16px;
+      }
+
+      .hr-q {
+        font-size: 18px;
+        font-weight: 900;
+        margin-bottom: 10px;
+      }
+
+      .hr-live-inline {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .hr-live-inline .lbl {
+        font-size: 12px;
+        font-weight: 900;
+        color: rgba(230, 238, 247, 0.65);
+        letter-spacing: 0.1px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+
+      .hr-inline-box {
+        border-radius: 12px;
+        padding: 10px 12px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.10);
+      }
+
+      .hr-sub {
+        color: rgba(230, 238, 247, 0.72);
+        font-weight: 600;
+        margin-bottom: 16px;
+      }
+
+      .mic-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+      }
+
+      .mic-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 900;
+        color: rgba(230, 238, 247, 0.85);
+      }
+
+      .mic-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 999px;
+        background: #22c55e;
+        box-shadow: 0 0 0 rgba(34, 197, 94, 0.0);
+      }
+
+      .mic-dot.listening {
+        animation: micPulse 1s ease-in-out infinite;
+        background: #22c55e;
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.0);
+      }
+
+      @keyframes micPulse {
+        0% {
+          box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.0);
+          transform: scale(1);
+        }
+        50% {
+          box-shadow: 0 0 0 10px rgba(34, 197, 94, 0.18);
+          transform: scale(1.05);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.0);
+          transform: scale(1);
+        }
+      }
+
+      .hr-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .btn-hr {
+        border: none;
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-weight: 900;
+        cursor: pointer;
+        transition: transform 120ms ease, filter 120ms ease;
+        color: white;
+      }
+
+      .btn-hr:active {
+        transform: scale(0.99);
+      }
+
+      .btn-start {
+        background: linear-gradient(90deg, #2563eb, #7c3aed);
+      }
+
+      .btn-stop {
+        background: linear-gradient(90deg, #ef4444, #f59e0b);
+      }
+
+      .btn-secondary {
+        background: rgba(148, 163, 184, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: rgba(230, 238, 247, 0.9);
+      }
+
+      .hr-livebox {
+        min-height: 130px;
+        padding: 12px 12px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        color: rgba(230, 238, 247, 0.92);
+      }
+
+      .hr-live-label {
+        font-weight: 900;
+        margin-bottom: 8px;
+        color: rgba(230, 238, 247, 0.78);
+        font-size: 13px;
+        letter-spacing: 0.2px;
+        text-transform: uppercase;
+      }
+
+      .hr-live-text {
+        font-weight: 700;
+        white-space: pre-wrap;
+        word-break: break-word;
+        line-height: 1.4;
+      }
+
+      .state-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        background: rgba(148, 163, 184, 0.10);
+        font-weight: 900;
+        color: rgba(230, 238, 247, 0.85);
+        font-size: 13px;
+      }
+
+      html[data-theme="light"] body {
+        background: radial-gradient(
+            1200px 600px at 10% 10%,
+            rgba(139, 92, 246, 0.25) 0%,
+            rgba(59, 130, 246, 0.10) 35%,
+            rgba(255, 255, 255, 0) 70%
+          ),
+          linear-gradient(135deg, #f8fafc 0%, #efe9ff 40%, #e0f2fe 100%);
+        color: #0b2c4d;
+      }
+    </style>
+  </head>
+
+  <body>
+    {% include 'base.html' %}
+
+    <div class="hr-wrap">
+      <div class="hr-card">
+        <div class="hr-header">
+          <div class="hr-title">
+            <i class="fa-solid fa-microphone" style="font-size:18px;"></i>
+            HR Voice Interview
+          </div>
+          <div class="state-pill">
+            <div style="font-size:13px;">
+              Attempt {{ attempt_number }} of {{ max_attempts }}
+            </div>
+            <span id="hrVoiceStateText" style="display:block;margin-top:6px;">
+              voice_round_active: false
+            </span>
+          </div>
+        </div>
+
+        <div class="hr-body">
+          <div class="hr-grid">
+            <div class="hr-panel">
+              <div class="hr-live-inline">
+                <div class="hr-inline-box">
+                  <div class="lbl">Interview Status</div>
+                  <div id="rtInlineStatusBadge" class="rt-badge rt-badge-online">Waiting</div>
+                </div>
+                <div class="hr-inline-box">
+                  <div class="lbl">Timer</div>
+                  <div
+                    id="rtInlineTimer"
+                    style="font-weight:1000; font-size:18px; color:#7dd3fc;"
+                  >
+                    15:00
+                  </div>
+                </div>
+                <div class="hr-inline-box" style="grid-column: 1 / -1;">
+                  <div class="lbl">Warning Alerts</div>
+                  <div
+                    id="rtInlineWarnings"
+                    style="font-weight:800; color: rgba(239,68,68,0.95);"
+                  >
+                    None
+                  </div>
+                </div>
+                <div class="hr-inline-box">
+                  <div class="lbl">Connection</div>
+                  <div id="rtInlineConnectionBadge" class="rt-badge rt-badge-offline">Offline</div>
+                </div>
+              </div>
+
+              <div class="hr-q" id="hrCurrentQuestion">Question will appear here</div>
+              <div class="hr-sub" id="hrStatusText">
+                Click <b>Start Voice</b> and answer. Say <b>finish</b> when finished.
+              </div>
+
+              <div class="mic-row">
+                <div class="mic-indicator">
+                  <span class="mic-dot" id="hrMicDot"></span>
+                  <span id="hrMicText">Idle</span>
+                </div>
+                <div class="hr-actions">
+                  <button class="btn-hr btn-start" id="hrStartBtn" type="button">
+                    <i class="fa-solid fa-microphone" style="margin-right:8px;"></i> Start Voice
+                  </button>
+                  <button
+                    class="btn-hr btn-stop"
+                    id="hrStopBtn"
+                    type="button"
+                    style="display:none;"
+                  >
+                    Stop
+                  </button>
+                  <button
+                    class="btn-hr btn-secondary"
+                    id="hrFinishBtn"
+                    type="button"
+                    style="display:none;"
+                    title="Manually submit the current answer"
+                  >
+                    Finish Answer
+                  </button>
+                </div>
+              </div>
+
+              <div style="margin-top: 14px;">
+                <div class="hr-livebox">
+                  <div class="hr-live-label">Your spoken answer (real-time)</div>
+                  <div class="hr-live-text" id="hrSpokenLive">—</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="hr-panel">
+              <div class="hr-live-label" style="margin-bottom:10px;">Voice loop progress</div>
+              <div class="hr-sub" id="hrProgressText" style="margin-bottom:12px;">Waiting for start…</div>
+              <div class="hr-livebox" style="min-height: 210px;">
+                <div class="hr-live-label">Rounds</div>
+                <div class="hr-live-text" id="hrRoundLog">No answers yet.</div>
+              </div>
+            </div>
+          </div>
+
+          <form method="POST" action="/hr" id="hrVoiceForm" style="display:none;">
+            <input type="hidden" name="score" value="15" />
+            <div id="hiddenAnswers"></div>
+          </form>
+          
+          <div style="margin-top: 14px; color: rgba(230,238,247,0.70); font-weight: 600;">
+            Say "finish" or "done" (or use "Finish Answer") to submit the current question answer.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const questions = {{ questions | tojson }};
+
+      const hrStartBtn = document.getElementById("hrStartBtn");
+      const hrStopBtn = document.getElementById("hrStopBtn");
+      const hrFinishBtn = document.getElementById("hrFinishBtn");
+      const hrMicDot = document.getElementById("hrMicDot");
+      const hrMicText = document.getElementById("hrMicText");
+      const hrStatusText = document.getElementById("hrStatusText");
+      const hrVoiceStateText = document.getElementById("hrVoiceStateText");
+      const hrCurrentQuestion = document.getElementById("hrCurrentQuestion");
+      const hrSpokenLive = document.getElementById("hrSpokenLive");
+      const hrProgressText = document.getElementById("hrProgressText");
+      const hrRoundLog = document.getElementById("hrRoundLog");
+      const hiddenAnswers = document.getElementById("hiddenAnswers");
+      const hrVoiceForm = document.getElementById("hrVoiceForm");
+
+      let recognition = null;
+      let questionIndex = 0;
+      let voiceRoundActive = false;
+      let voiceRoundCompleted = false;
+      let isSpeaking = false;
+      let submissionRequested = false;
+      let answers = [];
+      let currentTranscript = "";
+      let silenceTimer = null;
+      let silenceWarnings = 0;
+      let lastHeardAt = 0;
+      let ignoreNextOnend = false;
+      /** True while TTS is playing — Chrome often breaks if the mic runs at the same time. */
+      let ttsInProgress = false;
+
+      function safeText(s) {
+        return String(s ?? "");
+      }
+
+      function stopRecognitionForTts() {
+        if (!recognition) return;
+        try {
+          ignoreNextOnend = true;
+          recognition.stop();
+        } catch (e) {
+          /* ignore */
+        }
+        voiceRoundActive = false;
+        updateVoiceState();
+      }
+
+      function safeRecognitionStart(reason) {
+        if (!recognition) return;
+        try {
+          recognition.start();
+        } catch (e) {
+          // Chrome throws InvalidStateError if start() is called while already started.
+          if (e && e.name === "InvalidStateError") {
+            return;
+          }
+          setStatus(
+            "⚠ Microphone listening failed to start. " +
+              safeText(e && e.message ? e.message : reason) +
+              ". Try <b>Start Voice</b> again and allow the microphone.",
+            false
+          );
+        }
+      }
+
+      function updateVoiceState() {
+        if (!hrVoiceStateText) return;
+        hrVoiceStateText.textContent =
+          "voice_round_active: " + (voiceRoundActive ? "true" : "false");
+      }
+
+      function setStatus(html, listening) {
+        hrStatusText.innerHTML = html;
+        hrMicText.textContent = listening ? "Recording..." : "Idle";
+        hrMicDot.classList.toggle("listening", !!listening);
+      }
+
+      function speakQuestion(q) {
+  return new Promise((resolve) => {
+    let settled = false;
+
+    ttsInProgress = true;
+    stopRecognitionForTts();
+
+    const finishAndListen = () => {
+      if (settled) return;
+      settled = true;
+
+      isSpeaking = false;
+      ttsInProgress = false;
+
+      // 🔥 IMPORTANT FIX
+      setTimeout(() => {
+        safeRecognitionStart("after-tts");
+        resolve();
+      }, 500); // increased delay
+    };
+
+    try {
+      window.speechSynthesis.cancel();
+      isSpeaking = true;
+
+      const utter = new SpeechSynthesisUtterance(q);
+      utter.rate = 0.9;
+
+      utter.onend = finishAndListen;
+      utter.onerror = finishAndListen;
+
+      window.speechSynthesis.speak(utter);
+
+      setTimeout(finishAndListen, 4000);
+    } catch (e) {
+      finishAndListen();
+    }
+  });
+}
+
+      function clearSilenceTimer() {
+        if (silenceTimer) clearTimeout(silenceTimer);
+        silenceTimer = null;
+      }
+
+      function startSilenceTimer() {
+        clearSilenceTimer();
+        // If the user goes silent, warn, but DO NOT stop recognition.
+        // Stopping/restarting can cause Chrome to fail the next `start()`,
+        // which breaks the "say finish" flow.
+        silenceTimer = setTimeout(() => {
+          if (!voiceRoundActive || voiceRoundCompleted) return;
+          if (submissionRequested) return;
+
+          lastHeardAt = lastHeardAt || Date.now();
+          const now = Date.now();
+          silenceWarnings += 1;
+          setStatus(
+            "⚠ Still waiting for your answer. Say <b>finish</b> when done.",
+            true
+          );
+          // Keep listening; schedule another check.
+          startSilenceTimer();
+        }, 7000);
+      }
+
+      function finalizeCurrentAnswer() {
+        clearSilenceTimer();
+
+        let cleaned = (currentTranscript || "").trim();
+        // SpeechRecognition transcripts may include punctuation/spacing.
+        // Strip the keyword even if it's not tokenized as a whole word.
+        cleaned = cleaned.replace(/finish|done/gi, "").trim();
+
+        // If the user said "finish/done" but the transcript becomes empty
+        // (common when the keyword is recognized but the answer isn't),
+        // do NOT block the interview from progressing.
+        if (!cleaned) {
+          if (submissionRequested) {
+            cleaned = "(no transcript captured)";
+          } else {
+            silenceWarnings += 1;
+            hrSpokenLive.textContent = "—";
+            setStatus(
+              "⚠ No answer detected. Please try again. Say <b>finish</b> to submit.",
+              true
+            );
+
+            currentTranscript = "";
+            setTimeout(() => {
+              safeRecognitionStart("retry-after-empty");
+            }, 650);
+            return;
+          }
+        }
+
+        answers[questionIndex] = cleaned;
+
+        const q = questions[questionIndex] || ("Question " + (questionIndex + 1));
+        hrRoundLog.innerHTML =
+          (hrRoundLog.innerHTML && hrRoundLog.innerHTML !== "No answers yet."
+            ? hrRoundLog.innerHTML + "<br><br>"
+            : "") +
+          "<b>Q" +
+          (questionIndex + 1) +
+          ":</b> " +
+          q +
+          "<br>" +
+          "<b>Answer:</b> " +
+          cleaned;
+
+        questionIndex += 1;
+
+        if (questionIndex >= questions.length) {
+          voiceRoundCompleted = true;
+
+          hrCurrentQuestion.textContent = "Interview Completed";
+          hrProgressText.textContent = "All questions completed.";
+          setStatus("Processing final submission…", false);
+
+          hiddenAnswers.innerHTML = "";
+          for (const a of answers) {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "answers[]";
+            input.value = a || "";
+            hiddenAnswers.appendChild(input);
+          }
+
+          setTimeout(() => hrVoiceForm.submit(), 750);
+          return;
+        }
+
+        // Next question (do NOT switch to typing mode; keep voice flow).
+        const nextQ = questions[questionIndex];
+        currentTranscript = "";
+        hrSpokenLive.textContent = "—";
+        hrCurrentQuestion.textContent = nextQ;
+        hrProgressText.textContent =
+          "Question " + (questionIndex + 1) + " of " + questions.length;
+
+        setStatus("Recording… Say <b>finish</b> to submit.", true);
+        // Re-enable keyword detection for the next answer.
+        submissionRequested = false;
+        speakQuestion(nextQ).then(() => {});
+      }
+
+      function initRecognition() {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) {
+          setStatus(
+            "Speech recognition is not supported in this browser. Try Chrome or Edge.",
+            false
+          );
+          hrStartBtn.disabled = true;
+          return null;
+        }
+
+        recognition = new SR();
+        recognition.lang = "en-US";
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        try {
+          recognition.maxAlternatives = 1;
+        } catch (e) {}
+        // Chrome/Edge are more stable with shorter recognition sessions; onend restarts listening.
+        const ua = navigator.userAgent || "";
+        const isChromiumLike =
+          /Chrome|Chromium|Edg|CriOS|OPR|Opera/i.test(ua) && !/Firefox/i.test(ua);
+        recognition.continuous = !isChromiumLike;
+
+        recognition.onstart = function () {
+          voiceRoundActive = true;
+          updateVoiceState();
+          submissionRequested = false;
+          silenceWarnings = 0;
+          lastHeardAt = Date.now();
+
+          setStatus(
+            isSpeaking || ttsInProgress
+              ? "Please wait… question audio is playing."
+              : "Listening… Say <b>finish</b> to submit.",
+            true
+          );
+          hrSpokenLive.textContent = "Listening...";
+
+          hrStopBtn.style.display = "inline-flex";
+          if (hrFinishBtn) hrFinishBtn.style.display = "inline-flex";
+
+          startSilenceTimer();
+        };
+
+        recognition.onerror = function (ev) {
+          const code = ev && ev.error ? ev.error : "unknown";
+          let msg =
+            "Speech recognition issue (<code>" +
+            safeText(code) +
+            "</code>). ";
+          if (code === "not-allowed") {
+            msg +=
+              "Allow microphone for this site in Chrome (lock icon → Site settings → Microphone), then click <b>Start Voice</b> again.";
+          } else if (code === "network") {
+            msg +=
+              "Chrome needs a network connection for speech-to-text. Check Wi‑Fi/VPN, or try again.";
+          } else if (code === "no-speech") {
+            msg += "No speech heard — speak closer to the mic, then try again.";
+          } else if (code === "aborted") {
+            msg += "Listening was interrupted; click <b>Start Voice</b> if needed.";
+          } else {
+            msg +=
+              "Click <b>Start Voice</b> again. Use <b>HTTPS</b> or <b>localhost</b> (required by Chrome).";
+          }
+          setStatus(msg, false);
+        };
+
+        recognition.onresult = function (event) {
+          // Don't treat question TTS as the user's answer.
+          if (isSpeaking) return;
+
+          let interim = "";
+          let finalText = "";
+
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const res = event.results[i];
+            const t = res[0].transcript;
+            if (res.isFinal) finalText += t;
+            else interim += t;
+          }
+
+          const live = (currentTranscript + " " + finalText + " " + interim).trim();
+          currentTranscript = live;
+          hrSpokenLive.textContent = live.length ? live : "—";
+          lastHeardAt = Date.now();
+
+          const lower = live.toLowerCase();
+          // Robust keyword detection:
+          // - remove non-letters so "finish." / "fin ish" still matches "finish"
+          // - then use substring checks
+          const normalized = lower.replace(/[^a-z]/g, "");
+          const hasFinish = normalized.includes("finish") || normalized.includes("done");
+
+          if (hasFinish && !submissionRequested && !voiceRoundCompleted) {
+            submissionRequested = true;
+            setStatus("Processing… submitting your answer.", true);
+            clearSilenceTimer();
+            // Keep recognition running to avoid Chrome restart issues.
+            finalizeCurrentAnswer();
+            // After finalize advances, finalizeCurrentAnswer will reset
+            // submissionRequested when the next question begins.
+            return;
+          }
+
+          startSilenceTimer();
+        };
+
+        recognition.onend = function () {
+          voiceRoundActive = false;
+          updateVoiceState();
+          hrStopBtn.style.display = "none";
+          if (hrFinishBtn) hrFinishBtn.style.display = "none";
+
+          if (ignoreNextOnend) {
+            ignoreNextOnend = false;
+            return;
+          }
+
+          if (ttsInProgress || isSpeaking) {
+            return;
+          }
+
+          // If finish was detected -> finalize.
+          if (submissionRequested) {
+            submissionRequested = false;
+            return;
+          }
+
+          if (voiceRoundCompleted) return;
+
+          // No finish detected: prompt again for the SAME question.
+          setStatus(
+            "⚠ No answer detected yet. Please speak your answer again. Say <b>finish</b> when done.",
+            true
+          );
+
+          // Restart for the same question.
+          setTimeout(() => {
+            voiceRoundActive = false;
+            safeRecognitionStart("onend-restart");
+          }, 500);
+        };
+
+        return recognition;
+      }
+
+      function askQuestion(index) {
+        const q = questions[index] || ("Question " + (index + 1));
+        hrCurrentQuestion.textContent = q;
+        hrProgressText.textContent =
+          "Question " + (index + 1) + " of " + questions.length;
+        hrSpokenLive.textContent = "—";
+
+        currentTranscript = "";
+        setStatus("Recording… Say <b>finish</b> to submit.", true);
+        speakQuestion(q).then(() => {});
+      }
+
+      // Safety: stop recognition when the tab/page is exiting.
+      window.addEventListener("beforeunload", () => {
+        try {
+          recognition && recognition.stop();
+        } catch (e) {}
+      });
+
+      hrStartBtn.addEventListener("click", async () => {
+        if (voiceRoundCompleted) return;
+
+        // Chrome: mic permission must be granted; also ties activation to the click gesture.
+        try {
+          if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            await navigator.mediaDevices.getUserMedia({ audio: true });
+          }
+        } catch (e) {
+          setStatus(
+            "⚠ Microphone blocked. In Chrome: click the lock icon → Site settings → Microphone → Allow, then click <b>Start Voice</b> again.",
+            false
+          );
+          return;
+        }
+
+        if (!recognition) recognition = initRecognition();
+        if (!recognition) return;
+
+        questionIndex = 0;
+        voiceRoundActive = false;
+        voiceRoundCompleted = false;
+        submissionRequested = false;
+        answers = [];
+        currentTranscript = "";
+        silenceWarnings = 0;
+        hiddenAnswers.innerHTML = "";
+        hrRoundLog.textContent = "No answers yet.";
+        lastHeardAt = Date.now();
+        ttsInProgress = false;
+        isSpeaking = false;
+
+        // Do NOT start SpeechRecognition until after question TTS (Chrome reliability).
+        askQuestion(0);
+      });
+
+      hrStopBtn.addEventListener("click", () => {
+        try {
+          recognition && recognition.stop();
+        } catch (e) {}
+        voiceRoundActive = false;
+        updateVoiceState();
+        setStatus(
+          "Recording stopped. Say <b>finish</b> to submit when you're ready.",
+          false
+        );
+      });
+
+      if (hrFinishBtn) {
+        hrFinishBtn.addEventListener("click", () => {
+          if (voiceRoundCompleted) return;
+          if (!recognition) return;
+
+          submissionRequested = true;
+          clearSilenceTimer();
+          setStatus("Processing… submitting your answer.", true);
+
+          // Finalize immediately using whatever transcript is currently captured.
+          finalizeCurrentAnswer();
+        });
+      }
+    </script>
+  </body>
+</html>
+

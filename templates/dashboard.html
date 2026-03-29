@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Real-Time AI-Powered Interview System</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+<!-- ✅ SINGLE CSS LINK (FIXED) -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+
+<!-- Bootstrap JS bundle (needed for modal/actions) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+</head>
+
+<body>
+{% include 'base.html' %}
+
+<!-- 🔥 LOADER -->
+<div id="loader">
+    <div class="spinner"></div>
+    <p>Loading Interview Dashboard...</p>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+<div>
+<h4><i class="bi bi-robot me-2"></i>Real-Time AI-Powered Interview System</h4>
+<small>Secure & Smart Interview Platform</small>
+{% if user %}
+  <small class="ms-3" style="opacity:0.95;font-weight:800;">
+    Attempt {{ attempt_number }} of {{ max_attempts }}
+  </small>
+{% endif %}
+</div>
+
+<!-- (User dropdown is injected by templates/base.html) -->
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+<a href="/dashboard" class="active"><i class="bi bi-house"></i> Dashboard</a>
+{% if user %}
+<a href="/profile"><i class="bi bi-person"></i> Profile</a>
+<a href="/face_verification"><i class="bi bi-camera"></i> Face Verification</a>
+<a href="/aptitude"><i class="bi bi-file-text"></i> Aptitude</a>
+<a href="/technical"><i class="bi bi-laptop"></i> Technical</a>
+<a href="/coding"><i class="bi bi-code-slash"></i> Coding</a>
+<a href="/hr"><i class="bi bi-mic"></i> HR</a>
+<a href="/results"><i class="bi bi-bar-chart"></i> Results</a>
+<a href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
+{% endif %}
+</div>
+
+<div class="content">
+
+<div class="rt-page-intro">
+  Welcome to AI Interview Platform
+</div>
+
+{% if not user %}
+<div class="card text-center p-5">
+<h4>Guest Preview</h4>
+<p>Please login to start your interview</p>
+<a href="/login" class="btn btn-primary me-2">Login</a>
+<a href="/register" class="btn btn-success">Register</a>
+</div>
+<script>
+  window.addEventListener("load", () => {
+    if (window.__rtShowToast) {
+      window.__rtShowToast(
+        "Guest Dashboard",
+        "Please login to start your interview",
+        "info"
+      );
+    }
+  });
+</script>
+{% endif %}
+
+{% if user %}
+
+<!-- 🔥 STEP CALCULATION (IMPORTANT FIX) -->
+{% set step = 0 %}
+{% if user.hr_done %}{% set step = 4 %}
+{% elif user.coding_done %}{% set step = 3 %}
+{% elif user.technical_done %}{% set step = 2 %}
+{% elif user.aptitude_done %}{% set step = 1 %}
+{% endif %}
+
+<div class="row g-4">
+
+<!-- FACE -->
+<div class="col-md-4">
+<div class="card p-3">
+<h5>Face Verification</h5>
+
+{% if user.face_image %}
+<div style="position:relative;">
+<img src="{{ url_for('static', filename=user.face_image) }}" class="face-img">
+<div class="status-badge"><i class="bi bi-check"></i></div>
+</div>
+{% else %}
+<p class="text-muted">No face verified</p>
+{% endif %}
+
+{% if user.face_image %}
+<p class="text-success mt-2">✔ Face Verified Successfully</p>
+{% endif %}
+<button class="btn btn-danger w-100">Stop Camera</button>
+</div>
+</div>
+
+<!-- PROGRESS -->
+<div class="col-md-4">
+<div class="card p-3">
+<h5>Interview Progress</h5>
+
+<p>Round {{ step }} of 4</p>
+
+<div class="progress mb-3" style="height:10px;">
+    <div id="progressBar" class="progress-bar bg-primary" style="width:0%"></div>
+</div>
+
+<!-- STEPS -->
+<div class="step">
+<i class="bi {{ 'bi-check-circle-fill text-success' if step>=1 else 'bi-circle text-muted' }}"></i>
+Aptitude Test
+</div>
+
+<div class="step">
+<i class="bi {{
+  'bi-check-circle-fill text-success' if step>=2
+  else ('bi-record-circle text-primary' if step==1 else 'bi-circle text-muted')
+}}"></i>
+Technical
+</div>
+
+<div class="step">
+<i class="bi {{
+  'bi-check-circle-fill text-success' if step>=3
+  else ('bi-record-circle text-primary' if step==2 else 'bi-circle text-muted')
+}}"></i>
+Coding
+</div>
+
+<div class="step">
+<i class="bi {{
+  'bi-check-circle-fill text-success' if step>=4
+  else ('bi-record-circle text-primary' if step==3 else 'bi-circle text-muted')
+}}"></i>
+HR
+</div>
+
+</div>
+</div>
+
+<!-- INFO -->
+<div class="col-md-4">
+<div class="card p-3">
+<h5>Candidate Info</h5>
+
+<p><i class="bi bi-person"></i> {{ user.name }}</p>
+<p><i class="bi bi-envelope"></i> {{ user.email }}</p>
+<p><i class="bi bi-telephone"></i> {{ user.phone or "Not Provided" }}</p>
+<p><i class="bi bi-mortarboard"></i> {{ user.education or "Not Provided" }}</p>
+<p><i class="bi bi-briefcase"></i> {{ user.experience or "Not Provided" }}</p>
+
+<!-- 🔥 RESUME -->
+{% if user.resume %}
+<p>
+<i class="bi bi-file-earmark-text"></i>
+<a href="{{ url_for('static', filename=user.resume) }}" target="_blank"
+   class="btn btn-sm btn-outline-primary ms-2">
+   View Resume
+</a>
+</p>
+{% else %}
+<p class="text-muted">No Resume Uploaded</p>
+{% endif %}
+
+<!-- 🔥 SKILLS -->
+{% if user.skills %}
+<div class="mt-2">
+<i class="bi bi-tools"></i> <b>Skills:</b><br>
+
+{% for skill in user.skills.split(',') %}
+<span class="badge bg-primary me-1 mb-1">{{ skill }}</span>
+{% endfor %}
+
+</div>
+{% else %}
+<p class="text-muted">No skills detected</p>
+{% endif %}
+
+<hr>
+
+<h6>⚠ Monitoring</h6>
+<p>Warnings: {{ user.warning_count or 0 }}</p>
+
+{% if user.last_warning %}
+<p class="text-danger">{{ user.last_warning }}</p>
+{% endif %}
+</div>
+
+</div>
+
+</div>
+
+<!-- UPCOMING -->
+<div class="row mt-4">
+
+<div class="col-md-8">
+<div class="card p-3">
+
+<div class="d-flex justify-content-between align-items-center">
+<h5>Upcoming Question</h5>
+<span class="timer" id="timer">15:00</span>
+</div>
+
+{% if not user.aptitude_done %}
+<p class="mt-3 mb-2"><b>Stage:</b> Aptitude Test</p>
+<p class="text-muted mb-3">Answer the aptitude question below.</p>
+<a href="/aptitude" class="btn btn-primary w-100 start-interview-btn">Start Aptitude &rarr;</a>
+
+{% elif not user.technical_done %}
+<p class="mt-3 mb-2"><b>Stage:</b> Technical Questions</p>
+<p class="text-muted mb-3">Answer the technical interview questions.</p>
+<a href="/technical" class="btn btn-primary w-100 start-interview-btn">Start Technical &rarr;</a>
+
+{% elif not user.coding_done %}
+<p class="mt-3 mb-2"><b>Stage:</b> Coding Challenge</p>
+<p class="text-muted mb-3">Write a Python function to reverse a string.</p>
+<a href="/coding" class="btn btn-primary w-100 start-interview-btn">Start Coding Test &rarr;</a>
+
+{% elif not user.hr_done %}
+<p class="mt-3 mb-2"><b>Stage:</b> HR Interview</p>
+<p class="text-muted mb-3">Speak your HR answers and say "done" when finished.</p>
+<a href="/hr" class="btn btn-primary w-100 start-interview-btn">Start HR Interview &rarr;</a>
+
+{% else %}
+{% if can_retake %}
+<a href="/restart_interview" class="btn btn-primary w-100">
+  Retake Interview (Attempt {{ attempt_number }} of {{ max_attempts }})
+</a>
+{% else %}
+<a href="/results" class="btn btn-success w-100">View Results</a>
+{% endif %}
+{% endif %}
+
+</div>
+</div>
+
+<div class="col-md-4">
+<div class="card p-3 mb-3">
+<h5>Instructions</h5>
+<ul>
+<li>Stay in front of the camera</li>
+<li>Minimum 75% face match required</li>
+<li>No additional persons allowed</li>
+<li>Stable internet required</li>
+</ul>
+</div>
+
+<div class="card p-3">
+<h5>Technical Support</h5>
+<button
+  type="button"
+  id="supportChatBtn"
+  class="btn btn-outline-primary w-100 mb-2 support-action-btn"
+  data-support-type="chat"
+  data-bs-toggle="modal"
+  data-bs-target="#supportModal"
+>
+  Live Chat
+</button>
+<button
+  type="button"
+  id="supportReportBtn"
+  class="btn btn-outline-danger w-100 support-action-btn"
+  data-support-type="report"
+  data-bs-toggle="modal"
+  data-bs-target="#supportModal"
+>
+  Report Issue
+</button>
+</div>
+</div>
+
+</div>
+
+{% endif %}
+
+</div>
+
+<!-- SUPPORT MODAL -->
+<div class="modal fade" id="supportModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background:#021c35;color:#e6eef7;border:1px solid rgba(255,255,255,0.08);">
+      <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.08);">
+        <h5 class="modal-title" id="supportModalTitle">Support</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <div id="supportThankYou" class="alert alert-success" style="display:none;">
+          Thanks! We received your message.
+        </div>
+
+        <div id="supportChatPanel" style="display:none;">
+          <div
+            id="supportChatMessages"
+            class="mb-3"
+            style="
+              max-height:220px;
+              overflow:auto;
+              background:rgba(255,255,255,0.03);
+              padding:10px;
+              border-radius:10px;
+              border:1px solid rgba(255,255,255,0.08);
+            "
+          ></div>
+
+          <div class="input-group">
+            <input
+              type="text"
+              id="supportChatInput"
+              class="form-control"
+              placeholder="Type your message..."
+              aria-label="Message"
+            />
+            <button type="button" class="btn btn-primary" id="supportChatSendBtn">Send</button>
+          </div>
+        </div>
+
+        <div id="supportReportPanel" style="display:none;">
+          <p class="text-muted mb-2">Describe the issue and submit. (demo UI)</p>
+          <textarea
+            id="supportReportText"
+            class="form-control"
+            rows="4"
+            placeholder="e.g., Camera stopped working / audio issues / scoring mismatch"
+          ></textarea>
+          <div class="mt-3 d-flex gap-2">
+            <button type="button" class="btn btn-primary" id="supportReportSubmitBtn">Submit</button>
+            <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCRIPT -->
+<script>
+
+// ✅ SAFE STEP VALUE (FIX)
+let stepValue = 0;
+{% if user %}
+stepValue = {{ step }};
+{% endif %}
+
+// 🔥 FIXED LOAD EVENT (SAFE VERSION)
+window.addEventListener("load", function(){
+
+    // HIDE LOADER (SAFE)
+    const loader = document.getElementById("loader");
+    if(loader){
+        loader.style.display = "none";
+    }
+
+    // PROGRESS ANIMATION (SAFE)
+    let progress = stepValue * 25;
+    let bar = document.getElementById("progressBar");
+
+    if(bar){
+        setTimeout(()=>{
+            bar.style.width = progress + "%";
+        },300);
+    }
+
+    // ✅ UX polish: show loader + prevent double-click on navigation buttons
+    const startButtons = document.querySelectorAll("a.start-interview-btn");
+    startButtons.forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            // Don't re-handle if already clicked
+            if(btn.classList.contains("disabled")) return;
+
+            e.preventDefault();
+            if(loader){
+                loader.style.display = "flex";
+            }
+
+            btn.classList.add("disabled");
+            setTimeout(() => {
+                window.location.href = btn.href;
+            }, 150);
+        });
+    });
+
+    // ✅ Support modal actions (Live Chat + Report Issue demo UI)
+    const supportModalEl = document.getElementById("supportModal");
+    if(supportModalEl){
+        const supportModalTitle = document.getElementById("supportModalTitle");
+        const supportThankYou = document.getElementById("supportThankYou");
+        const supportChatPanel = document.getElementById("supportChatPanel");
+        const supportReportPanel = document.getElementById("supportReportPanel");
+        const supportChatMessages = document.getElementById("supportChatMessages");
+        const supportChatInput = document.getElementById("supportChatInput");
+        const supportChatSendBtn = document.getElementById("supportChatSendBtn");
+        const supportReportText = document.getElementById("supportReportText");
+        const supportReportSubmitBtn = document.getElementById("supportReportSubmitBtn");
+
+        function setPanel(which){
+            supportThankYou && (supportThankYou.style.display = "none");
+            if(supportChatPanel) supportChatPanel.style.display = (which === "chat") ? "block" : "none";
+            if(supportReportPanel) supportReportPanel.style.display = (which === "report") ? "block" : "none";
+        }
+
+        function addChatMessage(sender, text){
+            if(!supportChatMessages) return;
+            const safeText = (text || "").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+            const bubble = document.createElement("div");
+            bubble.style.marginBottom = "8px";
+            bubble.innerHTML = `<b>${sender}:</b> ${safeText}`;
+            supportChatMessages.appendChild(bubble);
+            supportChatMessages.scrollTop = supportChatMessages.scrollHeight;
+        }
+
+        supportModalEl.addEventListener("show.bs.modal", function(event){
+            const trigger = event.relatedTarget;
+            const type = trigger ? trigger.getAttribute("data-support-type") : "chat";
+
+            if(supportModalTitle){
+                supportModalTitle.textContent = (type === "report") ? "Report Issue" : "Live Chat";
+            }
+
+            setPanel(type === "report" ? "report" : "chat");
+
+            if(type !== "report"){
+                if(supportChatMessages){
+                    supportChatMessages.innerHTML = "";
+                    addChatMessage("Support", "Hi! How can we help? (demo chat)");
+                }
+                if(supportChatInput){
+                    supportChatInput.value = "";
+                    supportChatInput.focus();
+                }
+            }else{
+                if(supportReportText){
+                    supportReportText.value = "";
+                    supportReportText.focus();
+                }
+            }
+        });
+
+        if(supportChatSendBtn && supportChatInput){
+            function sendChat(){
+                const msg = supportChatInput.value.trim();
+                if(!msg){
+                    supportChatInput.focus();
+                    return;
+                }
+                addChatMessage("You", msg);
+                supportChatInput.value = "";
+
+                // Demo: simulated response
+                setTimeout(() => {
+                    addChatMessage("Support", "Thanks! We’ll get back to you shortly. (demo)");
+                }, 500);
+            }
+
+            supportChatSendBtn.addEventListener("click", sendChat);
+            supportChatInput.addEventListener("keydown", (e) => {
+                if(e.key === "Enter"){
+                    e.preventDefault();
+                    sendChat();
+                }
+            });
+        }
+
+        if(supportReportSubmitBtn && supportReportText){
+            supportReportSubmitBtn.addEventListener("click", () => {
+                const issue = supportReportText.value.trim();
+                if(!issue){
+                    supportReportText.focus();
+                    supportReportText.style.borderColor = "#dc3545";
+                    supportReportText.focus();
+                    return;
+                }
+                supportReportText.style.borderColor = "";
+                if(supportChatPanel) supportChatPanel.style.display = "none";
+                if(supportReportPanel) supportReportPanel.style.display = "none";
+                supportThankYou && (supportThankYou.style.display = "block");
+
+                // Demo only: show success and close modal
+                setTimeout(() => {
+                    const instance = bootstrap.Modal.getInstance(supportModalEl);
+                    if(instance) instance.hide();
+                }, 800);
+            });
+        }
+    }
+});
+
+// TIMER (NO CHANGE)
+let time = 900;
+setInterval(()=>{
+let el=document.getElementById("timer");
+if(!el) return;
+let m=Math.floor(time/60);
+let s=time%60;
+el.innerText=(m<10?"0":"")+m+":"+(s<10?"0":"")+s;
+if(time>0) time--;
+},1000);
+
+</script>
+
+</body>
+</html>

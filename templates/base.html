@@ -1,0 +1,123 @@
+{#}
+  Reusable top-right user dropdown with LIVE SESSION INFO.
+  Included into pages via: {% include 'base.html' %}
+#}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  referrerpolicy="no-referrer"
+>
+
+<div class="rt-user-root" id="rtUserDropdownRoot" aria-live="polite">
+
+  <button
+    type="button"
+    class="rt-user-toggle"
+    id="rtUserToggle"
+    aria-haspopup="true"
+    aria-expanded="false"
+    aria-controls="rtDropdownMenu"
+  >
+    <span class="rt-user-left">
+      <span class="rt-bell-wrap" aria-hidden="true">
+        <i class="fa-solid fa-bell"></i>
+        <span class="rt-notif-dot" id="rtNotifDot" aria-hidden="true"></span>
+        <span class="rt-notif-emoji" id="rtNotifEmoji" aria-hidden="true">🔴</span>
+        <span class="rt-notif-count" id="rtNotifCount">0</span>
+      </span>
+      <span class="rt-username" id="rtUsername">
+        {{ user.name if user is defined and user else "Guest" }}
+      </span>
+    </span>
+    <i class="fa-solid fa-chevron-down rt-chevron" aria-hidden="true"></i>
+  </button>
+
+  <div class="rt-dropdown-menu" id="rtDropdownMenu" role="menu" aria-label="User menu">
+    <div class="rt-menu-links" role="none">
+      {% set effective_role = session.get('user_role') or session.get('role') %}
+      {% if effective_role == 'admin' %}
+        <a class="rt-menu-item" href="/admin" role="menuitem">
+          <i class="fa-solid fa-gear"></i> Admin Panel
+        </a>
+      {% elif session.get('user_id') %}
+        <a class="rt-menu-item" href="/profile" role="menuitem">
+          <i class="fa-regular fa-user"></i> Profile
+        </a>
+        <a class="rt-menu-item" href="/resume" role="menuitem">
+          <i class="fa-regular fa-file"></i> Resume
+        </a>
+        <a class="rt-menu-item" href="/performance" role="menuitem">
+          <i class="fa-solid fa-chart-column"></i> Performance
+        </a>
+        <a class="rt-menu-item" href="/settings" role="menuitem">
+          <i class="fa-solid fa-gear"></i> Settings
+        </a>
+
+        <button type="button" class="rt-menu-item rt-menu-button" id="rtNotificationsBtn">
+          <i class="fa-solid fa-bell"></i> Notifications
+        </button>
+      {% else %}
+        <a class="rt-menu-item" href="/login" role="menuitem">
+          <i class="fa-regular fa-user"></i> Login
+        </a>
+        <a class="rt-menu-item" href="/register" role="menuitem">
+          <i class="fa-regular fa-file"></i> Register
+        </a>
+      {% endif %}
+
+      <div class="rt-dark-toggle">
+        <div class="rt-dark-toggle-left">
+          <i class="fa-solid fa-moon"></i>
+          <span>Dark Mode Toggle</span>
+        </div>
+        <label class="rt-switch" aria-label="Toggle dark mode">
+          <input type="checkbox" id="rtDarkModeToggle">
+          <span class="rt-switch-track" aria-hidden="true"></span>
+          <span class="rt-switch-thumb" aria-hidden="true"></span>
+        </label>
+      </div>
+
+      <button type="button" class="rt-menu-item rt-menu-button" id="rtSupportBtn">
+        <i class="fa-regular fa-circle-question"></i> Help / Support
+      </button>
+
+      {% if session.get('user_id') %}
+        <a class="rt-menu-item rt-menu-danger" href="/logout" role="menuitem">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </a>
+      {% endif %}
+    </div>
+
+    <div class="rt-live-section" id="rtLiveSection" role="presentation">
+      <div class="rt-live-title">LIVE SESSION INFO</div>
+
+      <div class="rt-live-row">
+        <span class="rt-live-label">Interview Status</span>
+        <span class="rt-badge" id="rtLiveStatusBadge">Waiting</span>
+      </div>
+
+      <div class="rt-live-row">
+        <span class="rt-live-label">Timer</span>
+        <span class="rt-live-timer" id="rtLiveTimer">15:00</span>
+      </div>
+
+      <div class="rt-live-row">
+        <span class="rt-live-label">Warning Alerts</span>
+        <span class="rt-live-warnings" id="rtLiveWarnings">None</span>
+      </div>
+
+      <div class="rt-live-row">
+        <span class="rt-live-label">Connection Status</span>
+        <span class="rt-badge rt-badge-offline" id="rtLiveConnectionBadge">Offline</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="rt-toast-container" id="rtToastContainer" aria-live="polite" aria-atomic="true"></div>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script defer src="{{ url_for('static', filename='js/main.js') }}"></script>
+

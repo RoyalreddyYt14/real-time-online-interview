@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Admin Dashboard</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+{% include 'base.html' %}
+
+<!-- HEADER -->
+
+<div class="header">
+
+<div>
+<h4>REAL TIME ONLINE INTERVIEW</h4>
+<div class="subtitle">Admin Analytics Dashboard</div>
+</div>
+
+<div>
+<i class="bi bi-person-circle"></i> Admin
+</div>
+
+</div>
+
+
+<!-- SIDEBAR -->
+
+<div class="sidebar">
+<a href="/admin" class="active"><i class="bi bi-gear"></i> Admin Panel</a>
+<a href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
+
+</div>
+
+
+<!-- MAIN CONTENT -->
+
+<div class="content">
+
+<h4 class="mb-4">Admin Dashboard Analytics</h4>
+
+{% if total_candidates == 0 %}
+<div class="alert alert-warning" role="alert">
+  <i class="bi bi-exclamation-triangle-fill"></i> No candidates found yet. Add candidate data to get full analytics.
+</div>
+{% endif %}
+
+<!-- ANALYTICS CARDS -->
+
+<div class="row mb-4">
+
+<div class="col-md-3">
+<div class="card p-3 text-center">
+<h6><i class="bi bi-people-fill text-primary me-1"></i>Total Candidates</h6>
+<h2>{{ total_candidates }}</h2>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card p-3 text-center">
+<h6><i class="bi bi-check2-circle text-success me-1"></i>Selected</h6>
+<h2 id="selectedCount" class="text-success">{{ selected }}</h2>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card p-3 text-center">
+<h6><i class="bi bi-x-circle text-danger me-1"></i>Rejected</h6>
+<h2 class="text-danger">{{ rejected }}</h2>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card p-3 text-center">
+<h6><i class="bi bi-bar-chart-line-fill text-info me-1"></i>Selection Rate</h6>
+<h2>{{ (selected/total_candidates*100)|round(1) if total_candidates>0 else 0 }}%</h2>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card p-3 text-center">
+<h6><i class="bi bi-star-fill text-warning me-1"></i>Average Score</h6>
+<h2>{{ average_score }}</h2>
+</div>
+</div>
+
+</div>
+
+
+<!-- CHART -->
+
+<div class="card p-4 mb-4">
+
+<h5>Interview Results Analytics</h5>
+
+<canvas id="adminChart" width="400" height="200"></canvas>
+
+</div>
+
+
+<!-- CANDIDATE TABLE -->
+<div class="row mb-3">
+
+<div class="col-md-3 mb-2">
+<input type="text" id="searchInput" class="form-control" placeholder="Search Candidate Name..." aria-label="Search candidate name">
+</div>
+
+<div class="col-md-3 mb-2">
+<select id="statusFilter" class="form-select" aria-label="Filter by status">
+  <option value="all" selected>All Status</option>
+  <option value="completed">Completed</option>
+  <option value="in-progress">In Progress</option>
+</select>
+</div>
+
+<div class="col-md-3 mb-2">
+<button id="exportButton" class="btn btn-success" type="button" aria-label="Export candidate list to Excel">
+<i class="bi bi-file-earmark-excel"></i> Export Excel
+</button>
+</div>
+
+</div>
+<div class="card p-4">
+
+<h5>Candidate List</h5>
+
+<table class="table table-striped mt-3" id="candidateTable">
+<thead>
+<tr>
+<th class="sortable" data-sort="0">ID</th>
+<th class="sortable" data-sort="1">Name</th>
+<th class="sortable" data-sort="2">Email</th>
+<th class="sortable" data-sort="3">Phone</th>
+<th class="sortable" data-sort="4">Aptitude</th>
+<th class="sortable" data-sort="5">Technical</th>
+<th class="sortable" data-sort="6">Coding</th>
+<th class="sortable" data-sort="7">HR</th>
+<th class="sortable" data-sort="8">Status</th>
+<th>Details</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for user in users %}
+
+<tr>
+<td>{{user.id}}</td>
+<td>{{user.name}}</td>
+<td>{{user.email}}</td>
+<td>{{user.phone}}</td>
+<td>{{user.aptitude_score or 0}}</td>
+<td>{{user.technical_score or 0}}</td>
+<td>{{user.coding_score or 0}}</td>
+<td>{{user.hr_score or 0}}</td>
+
+<td>
+{% if user.hr_done %}
+<span class="badge bg-success">Completed</span>
+{% else %}
+<span class="badge bg-warning">In Progress</span>
+{% endif %}
+</td>
+
+<td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin_user_detail', user_id=user.id) }}">View</a></td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script>
+  const chartEl = document.getElementById('adminChart');
+  if (chartEl) {
+    chartEl.dataset.selected = '{{ selected or 0 }}';
+    chartEl.dataset.rejected = '{{ rejected or 0 }}';
+    new Chart(chartEl, {
+      type: 'bar',
+      data: {
+        labels: ["Selected", "Rejected"],
+        datasets: [{
+          label: "Candidates",
+          data: [Number(chartEl.dataset.selected || 0), Number(chartEl.dataset.rejected || 0)],
+          backgroundColor: ["#2ecc71", "#e74c3c"]
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { precision: 0 }
+          }
+        }
+      }
+    });
+  }
+</script>
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+</body>
+</html>
