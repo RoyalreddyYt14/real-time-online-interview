@@ -1,12 +1,26 @@
 import os
+import re
 import subprocess
 import sys
 import threading
 import time
 import logging
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timezone
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+    jsonify,
+    flash,
+)
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 from PyPDF2 import PdfReader
 
 from flask_socketio import SocketIO, join_room
@@ -17,10 +31,20 @@ from models.warning_event_model import WarningEvent
 from models.interview_attempt_model import InterviewAttempt
 
 # Technical question generator (skill-based)
-from utils.question_generator import generate_technical_questions
+from utils.question_generator import (
+    generate_technical_questions,
+    generate_aptitude_questions,
+    generate_coding_questions,
+    generate_hr_questions,
+    load_question_bank,
+    add_question,
+)
 
 # Admin utilities
 from modules.admin_utils import calculate_admin_stats
+
+# OAuth
+from modules.oauth import oauth, init_oauth, get_oauth_user_info
 
 # General utilities
 from modules.utils import (
@@ -28,10 +52,12 @@ from modules.utils import (
     get_user_role,
     login_required,
     is_admin,
+    allowed_file,
     extract_text,
     extract_skills,
     format_mmss,
     get_proctor_stop_file,
+    generate_interview_suggestions,
 )
 
 app = Flask(__name__)
@@ -48,13 +74,24 @@ logger = logging.getLogger("interview_app")
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 
 # Interview settings
-# INTERVIEW_DURATION_SECONDS = 15 * 60  # 15 minutes
+# INTERVIEW_DURATION_SECONDS = 2 * 60 * 60  # 2 hours
 # MAX_ATTEMPTS = 3
 
 from modules.config import (
     get_config_dict,
     ADMIN_EMAIL,
     ADMIN_PASSWORD,
+    ADMIN_PASSWORD_HASH,
+    MAIL_SERVER,
+    MAIL_PORT,
+    MAIL_USE_TLS,
+    MAIL_USERNAME,
+    MAIL_PASSWORD,
+    GMAIL_OAUTH2_ENABLED,
+    GMAIL_OAUTH2_CLIENT_ID,
+    GMAIL_OAUTH2_CLIENT_SECRET,
+    GMAIL_OAUTH2_TOKEN_FILE,
+    ALLOWED_EXTENSIONS,
     INTERVIEW_DURATION_SECONDS,
     MAX_ATTEMPTS,
     UPLOAD_FOLDER,
@@ -64,11 +101,27 @@ from modules.config import (
 
 app.config.update(get_config_dict())
 
+# ===========================
+# INITIALIZE OAUTH
+# ===========================
+init_oauth(app)
+
 # Per-user in-memory session state (timer + status).
 _session_states = {}  # user_id -> {time_left, started, ended}
 _connected_user_ids = set()
 _session_lock = threading.Lock()
 _background_task_started = False
+
+
+# Use centralized email helpers
+from modules.email_utils import (
+    send_login_notification,
+    send_result_email,
+    is_email_configured,
+    log_email_config_status,
+)
+
+log_email_config_status()
 
 # =========================
 # DATABASE CONFIG
@@ -92,6 +145,58 @@ app.config["UPLOAD_FOLDER"] = str(UPLOAD_FOLDER)
 
 db.init_app(app)
 
+# Interview pass thresholds
+MIN_APTITUDE_PASS_SCORE = 10
+# Technical pass should allow reasonable, correct free-text answers rather than requiring near-perfect length.
+MIN_TECHNICAL_PASS_SCORE = 20
+MIN_CODING_PASS_SCORE = 20
+
+
+def has_passed_aptitude(user: User) -> bool:
+    return bool(
+        user.aptitude_done and (user.aptitude_score or 0) >= MIN_APTITUDE_PASS_SCORE
+    )
+
+
+def has_passed_technical(user: User) -> bool:
+    return bool(
+        user.technical_done and (user.technical_score or 0) >= MIN_TECHNICAL_PASS_SCORE
+    )
+
+
+def has_passed_coding(user: User) -> bool:
+    return bool(user.coding_done and (user.coding_score or 0) >= MIN_CODING_PASS_SCORE)
+
+
+def has_failed_aptitude(user: User) -> bool:
+    return bool(user.aptitude_done and not has_passed_aptitude(user))
+
+
+def has_failed_technical(user: User) -> bool:
+    return bool(user.technical_done and not has_passed_technical(user))
+
+
+def has_failed_coding(user: User) -> bool:
+    return bool(user.coding_done and not has_passed_coding(user))
+
+
+def _ensure_profile_and_face_verified(user: User):
+    """Require resume/profile completion and face verification before interview rounds."""
+    if not user.profile_completed:
+        flash(
+            "Please complete your profile and upload your resume before starting the interview.",
+            "warning",
+        )
+        return redirect(url_for("profile"))
+    if not user.face_image:
+        flash(
+            "Please complete face verification before starting the interview.",
+            "warning",
+        )
+        return redirect(url_for("face_verification"))
+    return None
+
+
 # =========================
 # GLOBAL PROCESS HANDLING
 # =========================
@@ -103,11 +208,6 @@ proctor_processes = {}  # user_id -> Popen
 # =========================
 # LOGIN CHECK
 # =========================
-def get_user_role() -> str | None:
-    # Prefer the new session key but keep backward compatibility.
-    return session.get("user_role") or session.get("role")
-
-
 def sync_interview_status_from_db(user: User) -> str:
     """
     Convert DB progress flags into a stable interview_status for session gating.
@@ -195,7 +295,7 @@ def _build_session_payload(user: User) -> dict:
         recent_events = []
 
     interview_status = sync_interview_status_from_db(user)
-    attempts_completed = _get_completed_attempt_count(user.id)
+    attempts_completed = get_attempt_count(user.id)
 
     payload = {
         # Used by the frontend badges.
@@ -212,6 +312,10 @@ def _build_session_payload(user: User) -> dict:
         "interview_status": interview_status,
         "can_retake": attempts_completed < MAX_ATTEMPTS,
         "connection": "Stable" if user.id in _connected_user_ids else "Offline",
+        # Latest HR transcription: updated by server-side voice process.
+        "hr_transcription": (
+            (user.hr_answer or "") if hasattr(user, "hr_answer") else ""
+        ),
     }
     return payload
 
@@ -349,12 +453,262 @@ def _get_latest_attempt(user_id: int):
         return None
 
 
+def _can_retake(user: User) -> bool:
+    """
+    Return True when the user may start a new attempt.
+
+    Candidates may retry as long as they have not reached the maximum
+    configured attempt count. Incomplete or interrupted attempts should
+    not block a fresh restart.
+    """
+    total_attempts = get_attempt_count(user.id)
+    return total_attempts < MAX_ATTEMPTS
+
+
+def _mark_latest_attempt_completed(user: User) -> None:
+    latest = _get_latest_attempt(user.id)
+    if latest and latest.completed_at is None:
+        latest.completed_at = datetime.now(timezone.utc)
+        db.session.commit()
+
+
+def _compute_technical_answer_score(answer: str) -> int:
+    """Compute a fallback technical score from free-text answers."""
+    if not answer:
+        return 0
+
+    text = answer.lower().strip()
+    keyword_score = 0
+    keywords = [
+        "class",
+        "object",
+        "inheritance",
+        "polymorphism",
+        "encapsulation",
+        "abstraction",
+        "exception",
+        "error",
+        "function",
+        "variable",
+        "loop",
+        "array",
+        "pointer",
+        "reference",
+        "sql",
+        "select",
+        "where",
+        "join",
+        "query",
+        "database",
+        "html",
+        "css",
+        "javascript",
+        "react",
+        "django",
+        "flask",
+        "api",
+        "rest",
+        "server",
+        "client",
+        "async",
+        "thread",
+        "data",
+        "model",
+        "browser",
+        "deployment",
+        "testing",
+        "bug",
+        "debug",
+        "version",
+        "control",
+        "git",
+        "memory",
+        "performance",
+        "optimization",
+        "backend",
+        "frontend",
+    ]
+
+    for keyword in keywords:
+        if keyword in text:
+            keyword_score += 3
+
+    length_score = (
+        8
+        if len(text) >= 100
+        else (
+            5
+            if len(text) >= 75
+            else 3 if len(text) >= 50 else 1 if len(text) >= 30 else 0
+        )
+    )
+    completeness_score = (
+        6
+        if len(text.split()) >= 15
+        else 4 if len(text.split()) >= 10 else 2 if len(text.split()) >= 6 else 0
+    )
+
+    score = min(20, keyword_score + length_score + completeness_score)
+    return score
+
+
+def _normalize_technical_score(raw_score: int, max_raw_score: int = 40) -> int:
+    raw_score = max(0, int(raw_score or 0))
+    if max_raw_score <= 40:
+        return min(raw_score, 40)
+    normalized = round((min(raw_score, max_raw_score) / max_raw_score) * 40)
+    return max(0, min(normalized, 40))
+
+
+def _compute_technical_score_from_answers(form_data) -> int:
+    answers = [value for key, value in form_data.items() if key.startswith("answer_")]
+    return sum(_compute_technical_answer_score(answer) for answer in answers)
+
+
+def _compute_coding_score_from_answers(form_data) -> int:
+    answers = [value for key, value in form_data.items() if key.startswith("answer_")]
+    keyword_score = 0
+    for answer in answers:
+        text = (answer or "").lower()
+        word_count = len(text.split())
+        keyword_score += sum(
+            3
+            for keyword in [
+                "def ",
+                "return",
+                "split(",
+                "lower()",
+                "for ",
+                "if ",
+                "in ",
+                "function ",
+                "filter(",
+                "map(",
+                "=>",
+                "select",
+                "from",
+                "where",
+                "join",
+                "group by",
+                "public",
+                "static",
+                "boolean",
+                "std::",
+                "string",
+                "vector",
+                "<form",
+                "<input",
+                "<img",
+                "<table",
+                "<a",
+                "useState",
+                "render(request",
+                "models.Model",
+            ]
+            if keyword in text
+        )
+        length_score = min(20, len(text) // 30)
+        completeness_score = 5 if word_count >= 10 else 0
+        keyword_score += length_score + completeness_score
+
+    return min(100, keyword_score)
+
+
+def _is_blank_answer(answer: str) -> bool:
+    if answer is None:
+        return True
+    normalized = str(answer).strip()
+    return not normalized or normalized == "(no transcript captured)"
+
+
+def _compute_hr_answer_score(answer: str) -> int:
+    """Score a single HR answer on a 0-20 scale."""
+    if _is_blank_answer(answer):
+        return 0
+
+    text = str(answer).strip()
+    word_count = len(re.findall(r"\b\w+\b", text))
+    sentences = re.findall(r"[^\r\n.!?]+[.!?]+", text)
+    sentence_count = len(sentences) if sentences else 1
+
+    keywords = [
+        "project",
+        "experience",
+        "team",
+        "challenge",
+        "learn",
+        "skill",
+        "role",
+        "problem",
+        "feedback",
+        "deadline",
+        "communication",
+        "collaborate",
+        "improve",
+        "result",
+        "success",
+        "goal",
+        "motivation",
+        "customer",
+        "impact",
+        "leadership",
+        "responsibility",
+        "adapt",
+        "culture",
+        "company",
+    ]
+    relevance_hits = sum(1 for keyword in keywords if keyword in text.lower())
+    relevance_score = min(5, relevance_hits * 2)
+
+    if word_count <= 3:
+        base_score = min(5, 2 + word_count)
+    elif sentence_count == 1:
+        base_score = 6 + min(4, max(0, (word_count - 6) // 5))
+    elif sentence_count <= 3:
+        base_score = 11 + min(4, max(0, (word_count - 12) // 8))
+    else:
+        base_score = 16 + min(4, max(0, (word_count - 25) // 10))
+
+    completeness_bonus = 0
+    if word_count >= 25 and sentence_count >= 2:
+        completeness_bonus += 1
+    if word_count >= 35 and sentence_count >= 3:
+        completeness_bonus += 1
+    if word_count >= 50 and sentence_count >= 4:
+        completeness_bonus += 1
+
+    score = base_score + relevance_score + completeness_bonus
+    if sentence_count >= 3 and relevance_hits >= 3 and word_count >= 35:
+        score = max(score, 18)
+    if sentence_count >= 4 and relevance_hits >= 4 and word_count >= 45:
+        score = max(score, 19)
+        if word_count >= 55:
+            score = max(score, 20)
+
+    return max(0, min(20, score))
+
+
+def _compute_hr_score_from_answers(raw_answers) -> int:
+    if not raw_answers:
+        return 0
+    scores = [_compute_hr_answer_score(answer) for answer in raw_answers]
+    if not scores:
+        return 0
+    return max(0, min(20, round(sum(scores) / len(scores))))
+
+
+def _get_current_attempt_number(user: User) -> int:
+    latest = _get_latest_attempt(user.id)
+    return latest.attempt_number if latest else 1
+
+
 def reset_interview_state_for_new_attempt(user: User) -> None:
     """
     Reset per-round flags/scores + warnings + timer for a new attempt.
     """
-    # Stop camera monitoring to ensure webcam resources are released.
-    stop_proctoring(user.id)
+    # Keep camera monitoring running across rounds so proctoring feels continuous.
+    # Previously we stopped proctoring here which caused gaps between rounds.
+    # Do not stop the proctor process when resetting internal state.
 
     # Reset DB progress flags/scores for a fresh attempt.
     user.aptitude_score = 0
@@ -392,8 +746,8 @@ def start_new_attempt(user: User) -> InterviewAttempt:
     """
     Create attempt row and reset interview state.
     """
-    completed = _get_completed_attempt_count(user.id)
-    if completed >= MAX_ATTEMPTS:
+    total_attempts = get_attempt_count(user.id)
+    if total_attempts >= MAX_ATTEMPTS:
         raise ValueError("Max attempts reached")
 
     latest = _get_latest_attempt(user.id)
@@ -407,6 +761,12 @@ def start_new_attempt(user: User) -> InterviewAttempt:
 
     session["attempt_id"] = attempt.id
     session["attempt_number"] = attempt.attempt_number
+
+    # Ensure background proctoring is running for this user.
+    try:
+        start_proctoring(user.id)
+    except Exception:
+        pass
 
     return attempt
 
@@ -517,6 +877,10 @@ def session_audit_and_sync():
                 # ✅ DO NOT override when starting new attempt
                 if session.get("interview_status") != "not_started":
                     session["interview_status"] = sync_interview_status_from_db(user)
+
+                # Keep background camera monitoring alive while the interview is active.
+                if session.get("interview_status") == "in_progress":
+                    start_proctoring(user.id)
             else:
                 session.pop("user_id", None)
                 session.pop("user_role", None)
@@ -545,7 +909,7 @@ def home():
         return redirect(url_for("admin_dashboard"))
     if login_required():
         return redirect(url_for("dashboard"))
-    return redirect(url_for("dashboard"))
+    return render_template("welcome.html")
 
 
 # =========================
@@ -554,14 +918,36 @@ def home():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
+        name = (request.form.get("name") or "").strip()
+        email = (request.form.get("email") or "").strip().lower()
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirmPassword", "")
+        agreed = request.form.get("terms")
 
-        if User.query.filter_by(email=request.form["email"]).first():
-            return "Email already exists"
+        if not name or not email or not password:
+            flash("Name, email, and password are required.", "warning")
+            return render_template("register.html")
 
+        if password != confirm_password:
+            flash("Passwords do not match.", "warning")
+            return render_template("register.html")
+
+        if not agreed:
+            flash("You must agree to the Terms & Conditions.", "warning")
+            return render_template("register.html")
+
+        if User.query.filter_by(email=email).first():
+            flash(
+                "Email already exists. Please login or use a different email.",
+                "warning",
+            )
+            return render_template("register.html")
+
+        # Store a hashed password instead of plaintext
         user = User(
-            name=request.form["name"],
-            email=request.form["email"],
-            password=request.form["password"],
+            name=name,
+            email=email,
+            password=generate_password_hash(password),
         )
 
         db.session.add(user)
@@ -583,20 +969,92 @@ def register():
 def login():
     if request.method == "POST":
 
+        # Lookup by email, then verify hashed password
         user = User.query.filter_by(
-            email=request.form["email"], password=request.form["password"]
+            email=(request.form.get("email") or "").strip().lower()
         ).first()
-
-        if user:
+        if user and check_password_hash(
+            user.password or "", request.form.get("password", "")
+        ):
             session["user_id"] = user.id
             session["user_role"] = "candidate"
             session["role"] = "candidate"
-            session["interview_status"] = "not_started"
+            session["interview_status"] = sync_interview_status_from_db(user)
+            # Send login notification to admin
+            threading.Thread(
+                target=send_login_notification, args=(user.name, user.email)
+            ).start()
             return redirect(url_for("dashboard"))
 
-        return "Invalid credentials"
+        flash("Invalid email or password.", "danger")
+        return render_template("login.html")
 
     return render_template("login.html")
+
+
+# ===========================
+# OAUTH LOGIN ROUTES
+# ===========================
+@app.route("/auth/<provider>")
+def oauth_authorize(provider):
+    """Redirect to OAuth provider for authorization."""
+    if provider not in ["google", "github", "microsoft"]:
+        return "Invalid provider", 400
+
+    redirect_uri = url_for("oauth_callback", provider=provider, _external=True)
+    client = oauth.create_client(provider)
+    return client.authorize_redirect(redirect_uri)
+
+
+@app.route("/auth/callback/<provider>")
+def oauth_callback(provider):
+    """Handle OAuth callback from provider."""
+    if provider not in ["google", "github", "microsoft"]:
+        return "Invalid provider", 400
+
+    try:
+        client = oauth.create_client(provider)
+        token = client.authorize_access_token()
+
+        # Get user info from provider
+        user_info = get_oauth_user_info(provider, token)
+
+        if not user_info.get("email"):
+            return "Unable to get email from provider", 400
+
+        email = user_info["email"]
+        name = user_info.get("name", email.split("@")[0])
+
+        # Check if user already exists
+        user = User.query.filter_by(email=email).first()
+
+        if not user:
+            # Create new user from OAuth info. Use a hashed placeholder password.
+            user = User(
+                name=name,
+                email=email,
+                password=generate_password_hash(f"oauth_{provider}_{int(time.time())}"),
+            )
+            db.session.add(user)
+            db.session.commit()
+
+        # Set session
+        session["user_id"] = user.id
+        session["user_role"] = "candidate"
+        session["role"] = "candidate"
+        session["interview_status"] = sync_interview_status_from_db(user)
+        session["oauth_provider"] = provider
+
+        # Send login notification
+        threading.Thread(
+            target=send_login_notification, args=(user.name, user.email)
+        ).start()
+
+        return redirect(url_for("dashboard"))
+
+    except Exception as e:
+        logger.error(f"OAuth callback error for {provider}: {str(e)}")
+        return f"Authentication failed: {str(e)}", 500
 
 
 # =========================
@@ -610,6 +1068,8 @@ def dashboard():
     can_retake = False
 
     # ✅ Proper login check
+    step = 0
+
     if "user_id" in session:
         user = db.session.get(User, session.get("user_id"))
 
@@ -617,22 +1077,47 @@ def dashboard():
             session.clear()
             user = None
         else:
-            # ✅ Get attempts count
-            attempts_completed = _get_completed_attempt_count(user.id)
-            can_retake = attempts_completed < MAX_ATTEMPTS
-
-            # ✅ Simple attempt number logic
-            attempt_number = attempts_completed + 1
-
-            # Save in session (optional)
+            can_retake = _can_retake(user)
+            attempt_number = _get_current_attempt_number(user)
             session["attempt_number"] = attempt_number
+
+            aptitude_passed = has_passed_aptitude(user)
+            technical_passed = has_passed_technical(user)
+            coding_passed = has_passed_coding(user)
+
+            aptitude_failed = has_failed_aptitude(user)
+            technical_failed = has_failed_technical(user)
+            coding_failed = has_failed_coding(user)
+
+            if aptitude_failed:
+                step = 1
+            elif not user.aptitude_done or not aptitude_passed:
+                step = 1
+            elif technical_failed:
+                step = 2
+            elif not user.technical_done or not technical_passed:
+                step = 2
+            elif coding_failed:
+                step = 3
+            elif not user.coding_done or not coding_passed:
+                step = 3
+            elif not user.hr_done:
+                step = 4
 
     return render_template(
         "dashboard.html",
         user=user,
         attempt_number=attempt_number,
+        next_attempt_number=(attempt_number + 1 if can_retake else attempt_number),
         max_attempts=MAX_ATTEMPTS,
         can_retake=can_retake,
+        step=step,
+        aptitude_passed=aptitude_passed if user else False,
+        technical_passed=technical_passed if user else False,
+        coding_passed=coding_passed if user else False,
+        aptitude_failed=aptitude_failed if user else False,
+        technical_failed=technical_failed if user else False,
+        coding_failed=coding_failed if user else False,
     )
 
 
@@ -644,25 +1129,10 @@ def retake_interview():
         return redirect(url_for("login"))
 
     user = db.session.get(User, session["user_id"])
-    if not user:
-        return redirect(url_for("login"))
+    if user:
+        logger.info("Retake button clicked for user_id=%s", user.id)
 
-    # Only allow retake after completion.
-    if not user.hr_done:
-        return redirect(url_for("dashboard"))
-
-    # Reset per-round session gating/state for the next attempt.
-    session["interview_status"] = "not_started"
-    session["answers"] = []
-    session["warnings"] = []
-    session["timer"] = INTERVIEW_DURATION_SECONDS
-
-    try:
-        start_new_attempt(user)
-    except ValueError:
-        return redirect(url_for("results"))
-
-    return redirect(url_for("dashboard"))
+    return redirect(url_for("restart_interview"))
 
 
 # =========================
@@ -678,30 +1148,31 @@ def profile():
     user = db.session.get(User, session["user_id"])
 
     if request.method == "POST":
-        user.phone = request.form["phone"]
-        user.education = request.form["education"]
-        user.experience = request.form["experience"]
+        user.phone = (request.form.get("phone") or "").strip()
+        user.education = (request.form.get("education") or "").strip()
+        user.experience = (request.form.get("experience") or "").strip()
 
         # 🔥 RESUME UPLOAD
         file = request.files.get("resume")
 
         if file and file.filename != "":
+            if not allowed_file(file.filename, ALLOWED_EXTENSIONS):
+                flash("Resume must be a PDF, DOC, or DOCX file.", "warning")
+                return render_template("profile.html", user=user)
+
             filename = secure_filename(file.filename)
             filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
             file.save(filepath)
 
             user.resume = "resumes/" + filename
-
             text = extract_text(filepath)
             skills = extract_skills(text)
-
             user.skills = ",".join(skills)
-
-            print("Extracted Skills:", skills)
 
         user.profile_completed = True
         db.session.commit()
 
+        flash("Profile updated successfully.", "success")
         return redirect(url_for("dashboard"))
 
     return render_template("profile.html", user=user)
@@ -724,15 +1195,46 @@ def face_verification():
 
     try:
         script_path = os.path.join(BASE_DIR, "face_verification.py")
-        subprocess.Popen(
-            [sys.executable, script_path, str(user.id)],
-            creationflags=subprocess.CREATE_NEW_CONSOLE,
-            cwd=BASE_DIR,
-        )
+        log_path = os.path.join(BASE_DIR, "instance", "face_verification.log")
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        with open(log_path, "a", encoding="utf-8") as log_file:
+            subprocess.Popen(
+                [sys.executable, script_path, str(user.id)],
+                creationflags=subprocess.CREATE_NEW_CONSOLE,
+                cwd=BASE_DIR,
+                stdout=log_file,
+                stderr=subprocess.STDOUT,
+            )
     except Exception as e:
         print("Face verification error:", e)
 
-    return render_template("face_verification.html")
+    return render_template("face_verification.html", user=user)
+
+
+@app.route("/face_verification/status")
+def face_verification_status():
+    if is_admin():
+        return jsonify(
+            {"completed": False, "message": "Admin users do not use face verification."}
+        )
+    if not login_required():
+        return jsonify({"completed": False, "message": "Not logged in."}), 401
+
+    user = db.session.get(User, session["user_id"])
+    if not user:
+        return jsonify({"completed": False, "message": "User not found."}), 404
+
+    return jsonify(
+        {
+            "completed": bool(user.face_image),
+            "face_image": user.face_image,
+            "message": (
+                "Face verification completed."
+                if user.face_image
+                else "Waiting for face verification..."
+            ),
+        }
+    )
 
 
 # =========================
@@ -746,6 +1248,25 @@ def aptitude():
         return redirect(url_for("login"))
 
     user = db.session.get(User, session["user_id"])
+
+    profile_redirect = _ensure_profile_and_face_verified(user)
+    if profile_redirect:
+        return profile_redirect
+
+    if user.aptitude_done:
+        if has_passed_aptitude(user):
+            return redirect(url_for("technical"))
+        if _can_retake(user):
+            flash(
+                f"You did not pass the aptitude round. Start a new attempt to retry the interview.",
+                "warning",
+            )
+            return redirect(url_for("restart_interview"))
+        flash(
+            f"You did not pass the aptitude round. Minimum {MIN_APTITUDE_PASS_SCORE}/20 is required to continue.",
+            "danger",
+        )
+        return redirect(url_for("dashboard"))
 
     # ✅ RESET FIX
     if session.get("interview_status") == "completed":
@@ -770,14 +1291,34 @@ def aptitude():
     mark_interview_started(user.id)
     start_proctoring(user.id)
 
-    # ✅ POST
+    skills = user.skills.split(",") if user.skills else []
+    aptitude_data = generate_aptitude_questions(skills)
+
     if request.method == "POST":
-        user.aptitude_score = int(request.form.get("score", 0))
+        questions = session.get("aptitude_questions", aptitude_data["questions"])
+        score = 0
+        for index, question in enumerate(questions):
+            answer = request.form.get(f"q{index}")
+            if answer and answer == question.get("answer"):
+                score += 1
+
+        user.aptitude_score = score
         user.aptitude_done = True
         db.session.commit()
+        session.pop("aptitude_questions", None)
+
+        if not has_passed_aptitude(user):
+            _mark_latest_attempt_completed(user)
+            flash(
+                f"You scored {score}/20 on the aptitude round. You must score at least {MIN_APTITUDE_PASS_SCORE} to continue to Technical.",
+                "danger",
+            )
+            return redirect(url_for("dashboard"))
+
         return redirect(url_for("technical"))
 
-    return render_template("aptitude.html")
+    session["aptitude_questions"] = aptitude_data["questions"]
+    return render_template("aptitude.html", user=user, aptitude=aptitude_data)
 
 
 # =========================
@@ -792,14 +1333,40 @@ def technical():
 
     user = db.session.get(User, session["user_id"])
 
+    profile_redirect = _ensure_profile_and_face_verified(user)
+    if profile_redirect:
+        return profile_redirect
+
     if not session.get("attempt_id"):
         ensure_first_attempt_exists(user)
 
     session["interview_status"] = sync_interview_status_from_db(user)
     if session.get("interview_status") == "completed":
-        attempts_completed = _get_completed_attempt_count(user.id)
+        attempts_completed = get_attempt_count(user.id)
         can_retake = attempts_completed < MAX_ATTEMPTS
         return redirect(url_for("dashboard") if can_retake else url_for("results"))
+
+    if not user.aptitude_done or not has_passed_aptitude(user):
+        flash(
+            f"Please complete and pass the aptitude round before accessing the technical round. Minimum {MIN_APTITUDE_PASS_SCORE}/20 is required.",
+            "warning",
+        )
+        return redirect(url_for("dashboard"))
+
+    if user.technical_done:
+        if has_passed_technical(user):
+            return redirect(url_for("coding"))
+        if _can_retake(user):
+            flash(
+                "You did not pass the technical round. Start a new attempt to retry the interview.",
+                "warning",
+            )
+            return redirect(url_for("restart_interview"))
+        flash(
+            "You did not pass the technical round and cannot continue to coding.",
+            "danger",
+        )
+        return redirect(url_for("dashboard"))
 
     # if check_warnings(user):
     # stop_proctoring(user.id)
@@ -816,12 +1383,55 @@ def technical():
         questions = ["Explain any programming concept"]
 
     if request.method == "POST":
-        user.technical_score = int(request.form.get("score", 0))
+        score_value = request.form.get("score")
+        try:
+            raw_score = int(score_value or 0)
+        except (ValueError, TypeError):
+            raw_score = 0
+
+        questions = generate_technical_questions(skills)
+        max_raw_score = len(questions) * 20 if questions else 40
+
+        normalized_score = _normalize_technical_score(raw_score, max_raw_score)
+        app.logger.debug("Technical raw score: %s", raw_score)
+        app.logger.debug(
+            "Technical calculated score: %s from raw %s and max_raw_score %s",
+            normalized_score,
+            raw_score,
+            max_raw_score,
+        )
+
+        # Fallback: compute a heuristic score from submitted answers when JavaScript scoring fails or is low.
+        if normalized_score < MIN_TECHNICAL_PASS_SCORE:
+            fallback_raw = _compute_technical_score_from_answers(request.form)
+            fallback_score = _normalize_technical_score(fallback_raw, max_raw_score)
+            app.logger.debug("Technical fallback raw score: %s", fallback_raw)
+            app.logger.debug(
+                "Technical fallback calculated score: %s from raw %s",
+                fallback_score,
+                fallback_raw,
+            )
+            if fallback_score > normalized_score:
+                normalized_score = fallback_score
+
+        normalized_score = max(0, min(normalized_score, 40))
+        app.logger.debug("Technical final score before save: %s", normalized_score)
+        user.technical_score = normalized_score
         user.technical_done = True
         db.session.commit()
+        app.logger.debug("Technical final score saved: %s", user.technical_score)
+
+        if not has_passed_technical(user):
+            _mark_latest_attempt_completed(user)
+            flash(
+                f"You scored {user.technical_score}. Minimum {MIN_TECHNICAL_PASS_SCORE} is required to continue to coding.",
+                "danger",
+            )
+            return redirect(url_for("dashboard"))
+
         return redirect(url_for("coding"))
 
-    return render_template("technical.html", questions=questions)
+    return render_template("technical.html", user=user, questions=questions)
 
 
 # =========================
@@ -836,14 +1446,40 @@ def coding():
 
     user = db.session.get(User, session["user_id"])
 
+    profile_redirect = _ensure_profile_and_face_verified(user)
+    if profile_redirect:
+        return profile_redirect
+
     if not session.get("attempt_id"):
         ensure_first_attempt_exists(user)
 
     session["interview_status"] = sync_interview_status_from_db(user)
     if session.get("interview_status") == "completed":
-        attempts_completed = _get_completed_attempt_count(user.id)
+        attempts_completed = get_attempt_count(user.id)
         can_retake = attempts_completed < MAX_ATTEMPTS
         return redirect(url_for("dashboard") if can_retake else url_for("results"))
+
+    if not user.technical_done or not has_passed_technical(user):
+        flash(
+            f"Please complete and pass the technical round before accessing the coding round. Minimum {MIN_TECHNICAL_PASS_SCORE} is required.",
+            "warning",
+        )
+        return redirect(url_for("dashboard"))
+
+    if user.coding_done:
+        if has_passed_coding(user):
+            return redirect(url_for("hr"))
+        if _can_retake(user):
+            flash(
+                "You did not pass the coding round. Start a new attempt to retry the interview.",
+                "warning",
+            )
+            return redirect(url_for("restart_interview"))
+        flash(
+            "You did not pass the coding round and cannot continue to HR.",
+            "danger",
+        )
+        return redirect(url_for("dashboard"))
 
     session["interview_status"] = "in_progress"
     # if check_warnings(user):
@@ -853,13 +1489,41 @@ def coding():
     mark_interview_started(user.id)
     start_proctoring(user.id)
 
+    skills = user.skills.split(",") if user.skills else []
+    coding_data = generate_coding_questions(skills)
+
     if request.method == "POST":
-        user.coding_score = int(request.form.get("score", 0))
+        try:
+            user.coding_score = int(request.form.get("score") or 0)
+        except (ValueError, TypeError):
+            user.coding_score = 0
+
+        if user.coding_score < MIN_CODING_PASS_SCORE:
+            fallback_score = _compute_coding_score_from_answers(request.form)
+            if fallback_score > user.coding_score:
+                user.coding_score = fallback_score
+
+        # Enforce backend score caps.
+        user.coding_score = max(0, min(user.coding_score, 40))
         user.coding_done = True
         db.session.commit()
+
+        if not has_passed_coding(user):
+            _mark_latest_attempt_completed(user)
+            flash(
+                f"You scored {user.coding_score}. Minimum {MIN_CODING_PASS_SCORE} is required to continue to HR.",
+                "danger",
+            )
+            return redirect(url_for("dashboard"))
+
         return redirect(url_for("hr"))
 
-    return render_template("coding.html")
+    return render_template(
+        "coding.html",
+        user=user,
+        coding_questions=coding_data["questions"],
+        coding_keywords=coding_data["keywords"],
+    )
 
 
 # =========================
@@ -874,11 +1538,40 @@ def hr():
         return redirect(url_for("login"))
 
     user = db.session.get(User, session["user_id"])
-    # ✅ Allow HR only after coding round
-    if not user.coding_done:
+
+    profile_redirect = _ensure_profile_and_face_verified(user)
+    if profile_redirect:
+        return profile_redirect
+
+    # Development-only one-time HR test mode.
+    if request.args.get("hr_test") == "1":
+        session["hr_test_mode"] = True
+        flash(
+            "HR test mode enabled for this session. Coding gate is bypassed once.",
+            "info",
+        )
+
+    hr_test_mode = session.get("hr_test_mode", False)
+
+    # ✅ Allow HR only after coding round unless test mode is enabled.
+    if not user.coding_done and not hr_test_mode:
+        flash("Please complete the coding round before accessing HR.", "warning")
         return redirect(url_for("dashboard"))
-    # ✅ ADD THIS LINE
-    attempts_completed = _get_completed_attempt_count(user.id)
+
+    if not has_passed_coding(user) and not hr_test_mode:
+        flash(
+            f"You did not pass the coding round. Minimum {MIN_CODING_PASS_SCORE} is required to reach HR.",
+            "danger",
+        )
+        return redirect(url_for("dashboard"))
+
+    # Prevent re-entering the HR flow once the round is completed.
+    if user.hr_done:
+        session["interview_status"] = "completed"
+        session.pop("hr_test_mode", None)
+        return redirect(url_for("results"))
+
+    attempts_completed = get_attempt_count(user.id)
 
     if not session.get("attempt_id"):
         ensure_first_attempt_exists(user)
@@ -913,14 +1606,32 @@ def hr():
         stop_proctoring(user.id)
 
         answers = request.form.getlist("answers[]")
-        cleaned_answers = [a.strip() for a in answers if a and a.strip()]
-        user.hr_answer = " | ".join(cleaned_answers)
+        raw_answers = [a for a in answers if a is not None]
+        cleaned_answers = [
+            a.strip()
+            for a in answers
+            if a and a.strip() and a.strip() != "(no transcript captured)"
+        ]
+        user.hr_answer = " | ".join(cleaned_answers) if cleaned_answers else None
 
-        user.hr_score = 15
+        # Calculate HR score dynamically from each spoken answer.
+        user.hr_score = _compute_hr_score_from_answers(raw_answers)
+        user.hr_score = max(0, min(user.hr_score, 20))
+
         user.hr_done = True
 
         # ✅ Mark interview completed
         session["interview_status"] = "completed"
+
+        # ✅ Mark the attempt as completed
+        try:
+            attempt_id = session.get("attempt_id")
+            if attempt_id:
+                attempt = db.session.get(InterviewAttempt, attempt_id)
+                if attempt and attempt.completed_at is None:
+                    attempt.completed_at = datetime.now(timezone.utc)
+        except Exception:
+            pass
 
         db.session.commit()
 
@@ -929,16 +1640,33 @@ def hr():
     # =========================
     # GET
     # =========================
-    hr_questions = [
-        "Tell me about yourself",
-        "Why should we hire you",
-        "What are your strengths",
-    ]
+    skills = user.skills.split(",") if user.skills else []
+    hr_questions = generate_hr_questions(skills)
+    if len(hr_questions) < 6:
+        hr_questions = (
+            hr_questions
+            + [
+                "Tell me about yourself and your most recent project.",
+                "Why are you interested in this role and our company?",
+                "What are your strengths and how do they relate to this job?",
+                "Describe a situation when you solved a difficult problem.",
+                "How do you handle feedback and tough deadlines?",
+                "How do you stay motivated during challenging projects?",
+            ]
+        )[:6]
+
+    session.pop("answers", None)
+    session.pop("warnings", None)
+    session.pop("timer", None)
+    # ✅ FIX: Keep interview_status as "in_progress" during HR interview
+    # Do NOT set it to "not_started" as it breaks redirect logic
+    session["interview_status"] = "in_progress"
 
     attempt_number = session.get("attempt_number") or 1
-
+    # Render HR page for GET
     return render_template(
         "hr.html",
+        user=user,
         questions=hr_questions,
         attempt_number=attempt_number,
         max_attempts=MAX_ATTEMPTS,
@@ -978,16 +1706,20 @@ def results():
 
     # Only allow retake while the current attempt number is below the maximum.
     # This keeps the results button in sync with the "Attempt X of Y" display.
-    can_retake = int(attempt_number) < MAX_ATTEMPTS
+    can_retake = _can_retake(user)
     session["interview_status"] = sync_interview_status_from_db(user)
-    if session.get("interview_status") != "completed":
+
+    # Allow results page access if: session says completed OR database shows user.hr_done
+    interview_status = session.get("interview_status")
+    if interview_status != "completed" and not user.hr_done:
         return redirect(url_for("dashboard"))
 
-    aptitude = user.aptitude_score or 0
-    technical = user.technical_score or 0
-    coding = user.coding_score or 0
-    hr = user.hr_score or 0
+    aptitude = max(0, min(user.aptitude_score or 0, 20))
+    technical = max(0, min(user.technical_score or 0, 40))
+    coding = max(0, min(user.coding_score or 0, 40))
+    hr = max(0, min(user.hr_score or 0, 20))
 
+    app.logger.debug("Technical final score for results page: %s", technical)
     total = aptitude + technical + coding + hr
     status = "SELECTED" if total >= 70 else "REJECTED"
 
@@ -1027,6 +1759,33 @@ def results():
 
     recent_warnings = [ev.message for ev in warning_events[:6] if ev and ev.message]
 
+    # Generate dynamic suggestions based on performance
+    suggestions = generate_interview_suggestions(user, warning_events, total_warnings)
+
+    attempt = None
+    if session.get("attempt_id"):
+        attempt = db.session.get(InterviewAttempt, session.get("attempt_id"))
+    if not attempt or attempt.user_id != user.id:
+        attempt = _get_latest_attempt(user.id)
+
+    if attempt and attempt.completed_at:
+        timestamp = attempt.completed_at
+    elif attempt and attempt.created_at:
+        timestamp = attempt.created_at
+    else:
+        timestamp = datetime.now(timezone.utc)
+
+    # Convert UTC to local timezone
+    if timestamp.tzinfo is None:
+        timestamp = timestamp.replace(tzinfo=timezone.utc)
+    local_timestamp = timestamp.astimezone()
+
+    interview_date = local_timestamp.strftime("%d %B %Y")
+    interview_time = local_timestamp.strftime("%H:%M")
+    interview_id = (
+        f"INT-{timestamp.year}-{attempt.id:04d}" if attempt and attempt.id else None
+    )
+
     return render_template(
         "results.html",
         user=user,
@@ -1046,6 +1805,10 @@ def results():
         recent_warnings=recent_warnings,
         hr_answers_summary=user.hr_answer,
         can_retake=can_retake,
+        suggestions=suggestions,
+        interview_date=interview_date,
+        interview_time=interview_time,
+        interview_id=interview_id,
     )
 
 
@@ -1059,6 +1822,30 @@ def logout():
     session.clear()
     # Always send users back to dashboard; it will render in guest mode.
     return redirect(url_for("dashboard"))
+
+
+@app.route("/interview/heartbeat", methods=["POST"])
+def interview_heartbeat():
+    """
+    Keep camera monitoring alive during active interviews.
+    Called periodically from frontend to ensure proctor process doesn't get terminated.
+    """
+    if not login_required():
+        return jsonify({"status": "error", "message": "not_logged_in"}), 401
+
+    user = db.session.get(User, session.get("user_id"))
+    if not user:
+        return jsonify({"status": "error", "message": "user_not_found"}), 404
+
+    # Only restart proctoring if interview is actively in progress.
+    interview_status = sync_interview_status_from_db(user)
+    if interview_status == "in_progress":
+        try:
+            start_proctoring(user.id)
+        except Exception:
+            pass
+
+    return jsonify({"status": "ok", "interview_status": interview_status}), 200
 
 
 @app.route("/interview/exit", methods=["POST"])
@@ -1097,15 +1884,36 @@ def admin_login():
         email = (request.form.get("email") or "").strip().lower()
         password = (request.form.get("password") or "").strip()
 
-        if email == ADMIN_EMAIL.lower() and password == ADMIN_PASSWORD:
+        if email == ADMIN_EMAIL.lower() and check_password_hash(
+            ADMIN_PASSWORD_HASH, password
+        ):
             session["user_role"] = "admin"
             session["role"] = "admin"  # backwards compatible
             session["interview_status"] = "not_started"
             return redirect(url_for("admin_dashboard"))
 
-        return "Invalid admin credentials"
+        flash("Invalid admin credentials.", "danger")
+        return render_template("admin_login.html")
 
     return render_template("admin_login.html")
+
+
+@app.route("/admin/test-email")
+def test_email():
+    """Test email notification - for admin testing only"""
+    if not is_admin():
+        return "Unauthorized", 403
+
+    if not is_email_configured():
+        return (
+            "Email sending is not configured. Set MAIL_USERNAME or SMTP_USERNAME and MAIL_PASSWORD or SMTP_PASSWORD, or enable Gmail OAuth2 with the correct environment variables.",
+            400,
+        )
+
+    sent = send_login_notification("Test Candidate", "test@example.com")
+    if sent:
+        return "Test email sent successfully! Check your mailbox."
+    return "Error sending test email. Check server logs for details.", 500
 
 
 @app.route("/admin")
@@ -1122,6 +1930,7 @@ def admin_dashboard():
         "admin.html",
         user={"name": "Admin"},
         users=users,
+        active_page="dashboard",
         **stats,
     )
 
@@ -1135,7 +1944,9 @@ def admin_user_detail(user_id):
     if not user:
         return redirect(url_for("admin_dashboard"))
 
-    return render_template("admin_user_detail.html", user=user)
+    return render_template(
+        "admin_user_detail.html", user=user, email_configured=is_email_configured()
+    )
 
 
 @app.route("/admin/user/<int:user_id>/toggle_complete", methods=["POST"])
@@ -1152,6 +1963,112 @@ def admin_toggle_complete(user_id):
         db.session.commit()
 
     return redirect(url_for("admin_user_detail", user_id=user_id))
+
+
+@app.route("/admin/user/<int:user_id>/send_result_email", methods=["POST"])
+def admin_send_result_email(user_id):
+    if get_user_role() != "admin":
+        return redirect(url_for("admin_login"))
+
+    user = db.session.get(User, user_id)
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for("admin_dashboard"))
+
+    recipient = (request.form.get("email") or "").strip()
+    selection = (request.form.get("result") or "rejected").strip().lower()
+    message = (request.form.get("message") or "").strip()
+
+    if not recipient:
+        flash("Please provide a recipient email.", "warning")
+        return redirect(url_for("admin_user_detail", user_id=user_id))
+
+    if not is_email_configured():
+        flash(
+            "Result email is not configured. Set MAIL_USERNAME and either MAIL_PASSWORD or Gmail OAuth2 env vars.",
+            "danger",
+        )
+        return redirect(url_for("admin_user_detail", user_id=user_id))
+
+    sent = send_result_email(user, recipient, selection, message)
+    if sent:
+        flash("Result email sent successfully.", "success")
+    else:
+        flash(
+            "Failed to send result email. Check server logs and mail configuration.",
+            "danger",
+        )
+
+    return redirect(url_for("admin_user_detail", user_id=user_id))
+
+
+@app.route("/admin/questions", methods=["GET", "POST"])
+@admin_required
+def admin_questions():
+    question_bank = load_question_bank()
+
+    if request.method == "POST":
+        skill = (request.form.get("skill") or "").strip()
+        question = (request.form.get("question") or "").strip()
+        if skill and question:
+            add_question(skill, question)
+            return redirect(url_for("admin_questions"))
+
+    return render_template(
+        "admin_questions.html",
+        user={"name": "Admin"},
+        question_bank=question_bank,
+        active_page="questions",
+    )
+
+
+@app.route("/admin/interviews")
+@admin_required
+def admin_interviews():
+    attempts = InterviewAttempt.query.order_by(InterviewAttempt.created_at.desc()).all()
+    attempts_data = []
+    for attempt in attempts:
+        user = db.session.get(User, attempt.user_id)
+        attempts_data.append(
+            {
+                "id": attempt.id,
+                "candidate_name": user.name if user else "Unknown",
+                "email": user.email if user else "Unknown",
+                "attempt_number": attempt.attempt_number,
+                "created_at": attempt.created_at,
+                "completed_at": attempt.completed_at,
+                "status": "Completed" if attempt.is_completed() else "In Progress",
+                "progress": "Completed" if user and user.hr_done else "In Progress",
+            }
+        )
+
+    completed_attempts = sum(1 for a in attempts_data if a["status"] == "Completed")
+    return render_template(
+        "admin_interviews.html",
+        user={"name": "Admin"},
+        attempts=attempts_data,
+        total_attempts=len(attempts_data),
+        completed_attempts=completed_attempts,
+        active_page="interviews",
+    )
+
+
+@app.route("/admin/reports")
+@admin_required
+def admin_reports():
+    users = User.query.all()
+    stats = calculate_admin_stats(users)
+    top_candidates = sorted(users, key=lambda u: u.total_score(), reverse=True)[:10]
+    total_warnings = sum(u.warning_count or 0 for u in users)
+
+    return render_template(
+        "admin_reports.html",
+        user={"name": "Admin"},
+        stats=stats,
+        top_candidates=top_candidates,
+        total_warnings=total_warnings,
+        active_page="reports",
+    )
 
 
 # =========================
@@ -1179,11 +2096,12 @@ def performance_view():
         return redirect(url_for("login"))
 
     user = db.session.get(User, session["user_id"])
-    aptitude = user.aptitude_score or 0
-    technical = user.technical_score or 0
-    coding = user.coding_score or 0
-    hr_score = user.hr_score or 0
+    aptitude = max(0, min(user.aptitude_score or 0, 20))
+    technical = max(0, min(user.technical_score or 0, 40))
+    coding = max(0, min(user.coding_score or 0, 40))
+    hr_score = max(0, min(user.hr_score or 0, 20))
 
+    app.logger.debug("Technical final score for performance page: %s", technical)
     total = aptitude + technical + coding + hr_score
     status = "SELECTED" if total >= 70 else "REJECTED"
 
@@ -1217,33 +2135,23 @@ def restart_interview():
         return redirect(url_for("login"))
 
     user = db.session.get(User, session["user_id"])
+    if not user or not _can_retake(user):
+        return redirect(url_for("dashboard"))
 
-    # ✅ RESET USER STATE (VERY IMPORTANT)
-    user.hr_done = False
-    user.aptitude_done = False
-    user.technical_done = False
-    user.coding_done = False
+    session["interview_status"] = "not_started"
+    session.pop("answers", None)
+    session.pop("warnings", None)
+    session.pop("attempt_id", None)
+    session.pop("attempt_number", None)
+    session.pop("hr_test_mode", None)
+    session["timer"] = INTERVIEW_DURATION_SECONDS
 
-    db.session.commit()
-
-    # ✅ START NEW ATTEMPT
     try:
         start_new_attempt(user)
     except ValueError:
         return redirect(url_for("results"))
 
-    session["interview_status"] = "not_started"
-
     return redirect(url_for("aptitude"))
-    # 🔥 DIRECT START
-
-    # ✅ RESET SESSION (VERY IMPORTANT)
-    session["interview_status"] = "not_started"
-    session.pop("answers", None)
-    session.pop("warnings", None)
-    session.pop("attempt_id", None)
-
-    return redirect(url_for("dashboard"))
 
 
 # =========================

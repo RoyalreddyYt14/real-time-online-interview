@@ -5,18 +5,12 @@
     <style>
       body {
         font-family: Segoe UI, system-ui, -apple-system, Arial, sans-serif;
-        background: radial-gradient(
-            1200px 600px at 10% 10%,
-            rgba(139,92,246,0.35) 0%,
-            rgba(59,130,246,0.18) 35%,
-            rgba(2,6,23,0) 70%
-          ),
-          linear-gradient(135deg, #06142c 0%, #2b1055 40%, #0b2c4d 100%);
+        background: radial-gradient(1200px 600px at 10% 10%, rgba(139, 92, 246, 0.35) 0%, rgba(59, 130, 246, 0.18) 35%, rgba(2, 6, 23, 0) 70%), linear-gradient(135deg, #06142c 0%, #2b1055 40%, #0b2c4d 100%);
         margin: 0;
         padding: 0;
         color: #e6eef7;
       }
-
+      
       .hr-wrap {
         min-height: 100vh;
         display: flex;
@@ -24,7 +18,7 @@
         justify-content: center;
         padding: 90px 16px 24px;
       }
-
+      
       .hr-card {
         width: min(920px, 100%);
         background: rgba(255, 255, 255, 0.06);
@@ -37,28 +31,23 @@
         transform: translateY(8px);
         animation: hrIn 260ms ease-out forwards;
       }
-
+      
       @keyframes hrIn {
         to {
           transform: translateY(0);
         }
       }
-
+      
       .hr-header {
         padding: 18px 20px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 12px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.10);
-        background: linear-gradient(
-          90deg,
-          rgba(37, 99, 235, 0.25) 0%,
-          rgba(139, 92, 246, 0.20) 60%,
-          rgba(34, 197, 94, 0.10) 100%
-        );
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        background: linear-gradient(90deg, rgba(37, 99, 235, 0.25) 0%, rgba(139, 92, 246, 0.2) 60%, rgba(34, 197, 94, 0.1) 100%);
       }
-
+      
       .hr-title {
         display: flex;
         align-items: center;
@@ -66,43 +55,43 @@
         font-weight: 900;
         letter-spacing: 0.2px;
       }
-
+      
       .hr-body {
         padding: 18px 20px 22px;
       }
-
+      
       .hr-grid {
         display: grid;
         grid-template-columns: 1.15fr 0.85fr;
         gap: 14px;
       }
-
+      
       @media (max-width: 860px) {
         .hr-grid {
           grid-template-columns: 1fr;
         }
       }
-
+      
       .hr-panel {
-        background: rgba(2, 6, 23, 0.30);
-        border: 1px solid rgba(255, 255, 255, 0.10);
+        background: rgba(2, 6, 23, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 14px;
         padding: 16px;
       }
-
+      
       .hr-q {
         font-size: 18px;
         font-weight: 900;
         margin-bottom: 10px;
       }
-
+      
       .hr-live-inline {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 10px;
         margin-bottom: 14px;
       }
-
+      
       .hr-live-inline .lbl {
         font-size: 12px;
         font-weight: 900;
@@ -111,20 +100,20 @@
         text-transform: uppercase;
         margin-bottom: 6px;
       }
-
+      
       .hr-inline-box {
         border-radius: 12px;
         padding: 10px 12px;
         background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.10);
+        border: 1px solid rgba(255, 255, 255, 0.1);
       }
-
+      
       .hr-sub {
         color: rgba(230, 238, 247, 0.72);
         font-weight: 600;
         margin-bottom: 16px;
       }
-
+      
       .mic-row {
         display: flex;
         align-items: center;
@@ -133,7 +122,7 @@
         margin-top: 10px;
         flex-wrap: wrap;
       }
-
+      
       .mic-indicator {
         display: inline-flex;
         align-items: center;
@@ -141,24 +130,24 @@
         font-weight: 900;
         color: rgba(230, 238, 247, 0.85);
       }
-
+      
       .mic-dot {
         width: 14px;
         height: 14px;
         border-radius: 999px;
         background: #22c55e;
-        box-shadow: 0 0 0 rgba(34, 197, 94, 0.0);
+        box-shadow: 0 0 0 rgba(34, 197, 94, 0);
       }
-
+      
       .mic-dot.listening {
         animation: micPulse 1s ease-in-out infinite;
         background: #22c55e;
-        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.0);
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
       }
-
+      
       @keyframes micPulse {
         0% {
-          box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.0);
+          box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
           transform: scale(1);
         }
         50% {
@@ -166,18 +155,18 @@
           transform: scale(1.05);
         }
         100% {
-          box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.0);
+          box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
           transform: scale(1);
         }
       }
-
+      
       .hr-actions {
         display: flex;
         gap: 10px;
         align-items: center;
         flex-wrap: wrap;
       }
-
+      
       .btn-hr {
         border: none;
         border-radius: 12px;
@@ -187,34 +176,34 @@
         transition: transform 120ms ease, filter 120ms ease;
         color: white;
       }
-
+      
       .btn-hr:active {
         transform: scale(0.99);
       }
-
+      
       .btn-start {
         background: linear-gradient(90deg, #2563eb, #7c3aed);
       }
-
+      
       .btn-stop {
         background: linear-gradient(90deg, #ef4444, #f59e0b);
       }
-
+      
       .btn-secondary {
         background: rgba(148, 163, 184, 0.14);
         border: 1px solid rgba(255, 255, 255, 0.12);
         color: rgba(230, 238, 247, 0.9);
       }
-
+      
       .hr-livebox {
         min-height: 130px;
         padding: 12px 12px;
         border-radius: 14px;
         background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.10);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         color: rgba(230, 238, 247, 0.92);
       }
-
+      
       .hr-live-label {
         font-weight: 900;
         margin-bottom: 8px;
@@ -223,14 +212,14 @@
         letter-spacing: 0.2px;
         text-transform: uppercase;
       }
-
+      
       .hr-live-text {
         font-weight: 700;
         white-space: pre-wrap;
         word-break: break-word;
         line-height: 1.4;
       }
-
+      
       .state-pill {
         display: inline-flex;
         align-items: center;
@@ -238,20 +227,14 @@
         padding: 6px 10px;
         border-radius: 999px;
         border: 1px solid rgba(148, 163, 184, 0.35);
-        background: rgba(148, 163, 184, 0.10);
+        background: rgba(148, 163, 184, 0.1);
         font-weight: 900;
         color: rgba(230, 238, 247, 0.85);
         font-size: 13px;
       }
-
-      html[data-theme="light"] body {
-        background: radial-gradient(
-            1200px 600px at 10% 10%,
-            rgba(139, 92, 246, 0.25) 0%,
-            rgba(59, 130, 246, 0.10) 35%,
-            rgba(255, 255, 255, 0) 70%
-          ),
-          linear-gradient(135deg, #f8fafc 0%, #efe9ff 40%, #e0f2fe 100%);
+      
+      html[data-theme='light'] body {
+        background: radial-gradient(1200px 600px at 10% 10%, rgba(139, 92, 246, 0.25) 0%, rgba(59, 130, 246, 0.1) 35%, rgba(255, 255, 255, 0) 70%), linear-gradient(135deg, #f8fafc 0%, #efe9ff 40%, #e0f2fe 100%);
         color: #0b2c4d;
       }
     </style>
@@ -264,16 +247,12 @@
       <div class="hr-card">
         <div class="hr-header">
           <div class="hr-title">
-            <i class="fa-solid fa-microphone" style="font-size:18px;"></i>
+            <i class="bi bi-mic-fill" style="font-size:18px;"></i>
             HR Voice Interview
           </div>
           <div class="state-pill">
-            <div style="font-size:13px;">
-              Attempt {{ attempt_number }} of {{ max_attempts }}
-            </div>
-            <span id="hrVoiceStateText" style="display:block;margin-top:6px;">
-              voice_round_active: false
-            </span>
+            <div style="font-size:13px;">Attempt {{ attempt_number }} of {{ max_attempts }}</div>
+            <span id="hrVoiceStateText" style="display:block;margin-top:6px;">voice_round_active: false</span>
           </div>
         </div>
 
@@ -287,21 +266,11 @@
                 </div>
                 <div class="hr-inline-box">
                   <div class="lbl">Timer</div>
-                  <div
-                    id="rtInlineTimer"
-                    style="font-weight:1000; font-size:18px; color:#7dd3fc;"
-                  >
-                    15:00
-                  </div>
+                  <div id="rtInlineTimer" style="font-weight:1000; font-size:18px; color:#7dd3fc;">120:00</div>
                 </div>
                 <div class="hr-inline-box" style="grid-column: 1 / -1;">
                   <div class="lbl">Warning Alerts</div>
-                  <div
-                    id="rtInlineWarnings"
-                    style="font-weight:800; color: rgba(239,68,68,0.95);"
-                  >
-                    None
-                  </div>
+                  <div id="rtInlineWarnings" style="font-weight:800; color: rgba(239,68,68,0.95);">None</div>
                 </div>
                 <div class="hr-inline-box">
                   <div class="lbl">Connection</div>
@@ -311,7 +280,7 @@
 
               <div class="hr-q" id="hrCurrentQuestion">Question will appear here</div>
               <div class="hr-sub" id="hrStatusText">
-                Click <b>Start Voice</b> and answer. Say <b>finish</b> when finished.
+                Click <b>Start Voice</b> and answer. Say <b>finish</b>, <b>finished</b>, <b>done</b>, or <b>stop</b> when finished.
               </div>
 
               <div class="mic-row">
@@ -320,26 +289,9 @@
                   <span id="hrMicText">Idle</span>
                 </div>
                 <div class="hr-actions">
-                  <button class="btn-hr btn-start" id="hrStartBtn" type="button">
-                    <i class="fa-solid fa-microphone" style="margin-right:8px;"></i> Start Voice
-                  </button>
-                  <button
-                    class="btn-hr btn-stop"
-                    id="hrStopBtn"
-                    type="button"
-                    style="display:none;"
-                  >
-                    Stop
-                  </button>
-                  <button
-                    class="btn-hr btn-secondary"
-                    id="hrFinishBtn"
-                    type="button"
-                    style="display:none;"
-                    title="Manually submit the current answer"
-                  >
-                    Finish Answer
-                  </button>
+                  <button class="btn-hr btn-start" id="hrStartBtn" type="button"><i class="bi bi-mic-fill" style="margin-right:8px;"></i> Start Voice</button>
+                  <button class="btn-hr btn-stop" id="hrStopBtn" type="button" style="display:none;">Stop</button>
+                  <button class="btn-hr btn-secondary" id="hrFinishBtn" type="button" style="display:none;" title="Manually submit the current answer">Finish Answer</button>
                 </div>
               </div>
 
@@ -365,10 +317,8 @@
             <input type="hidden" name="score" value="15" />
             <div id="hiddenAnswers"></div>
           </form>
-          
-          <div style="margin-top: 14px; color: rgba(230,238,247,0.70); font-weight: 600;">
-            Say "finish" or "done" (or use "Finish Answer") to submit the current question answer.
-          </div>
+
+          <div style="margin-top: 14px; color: rgba(230,238,247,0.70); font-weight: 600;">Say "finish", "done", or "stop" (or use "Finish Answer") to submit the current question answer.</div>
         </div>
       </div>
     </div>
@@ -391,22 +341,353 @@
       const hrVoiceForm = document.getElementById("hrVoiceForm");
 
       let recognition = null;
+      let mediaStream = null;  // Track the audio stream for cleanup
       let questionIndex = 0;
       let voiceRoundActive = false;
       let voiceRoundCompleted = false;
+      let isProcessingQuestion = false;
       let isSpeaking = false;
       let submissionRequested = false;
       let answers = [];
       let currentTranscript = "";
+      let lastLiveTranscript = "";
       let silenceTimer = null;
+      let answerTimeout = null;
+      const EXPECTED_HR_QUESTIONS = 6;
       let silenceWarnings = 0;
       let lastHeardAt = 0;
       let ignoreNextOnend = false;
+      let userStoppedRecognition = false;
+      let lastRecognitionError = null;
+      let recognitionRestartTimer = null;
+      let recognitionRestartCount = 0;
+      let startingRecognition = false;
+      let currentQuestionSessionId = 0;
       /** True while TTS is playing — Chrome often breaks if the mic runs at the same time. */
       let ttsInProgress = false;
 
+      // Allow longer HR answers so the system waits for a complete response.
+      const ANSWER_TIMEOUT_MS = 90000;
+
+      function renderCurrentQuestion() {
+        const q = questions[questionIndex] || "Question will appear here";
+        hrCurrentQuestion.textContent = q;
+        hrProgressText.textContent =
+          "Question " + (questionIndex + 1) + " of " + EXPECTED_HR_QUESTIONS;
+      }
+
+      renderCurrentQuestion();
+
       function safeText(s) {
         return String(s ?? "");
+      }
+
+      function setStatus(message, active) {
+        if (typeof message !== "string") {
+          message = String(message ?? "");
+        }
+        hrStatusText.innerHTML = message;
+        hrStatusText.style.color = active ? "#a5f3fc" : "#fca5a5";
+        if (active) {
+          hrStatusText.style.fontWeight = "800";
+        } else {
+          hrStatusText.style.fontWeight = "600";
+        }
+      }
+
+      function updateVoiceState() {
+        hrVoiceStateText.textContent =
+          "voice_round_active: " + (voiceRoundActive ? "true" : "false");
+        if (voiceRoundActive) {
+          hrMicDot.classList.add("listening");
+          hrMicText.textContent = "Listening";
+        } else {
+          hrMicDot.classList.remove("listening");
+          hrMicText.textContent = "Idle";
+        }
+      }
+
+      function releaseMicrophone() {
+        if (mediaStream) {
+          console.log("Releasing microphone");
+          mediaStream.getTracks().forEach((track) => {
+            try {
+              track.stop();
+            } catch (e) {
+              console.warn("Failed to stop media track", e);
+            }
+          });
+          mediaStream = null;
+        }
+      }
+
+      function clearRecognitionRestartTimer() {
+        if (recognitionRestartTimer) {
+          clearTimeout(recognitionRestartTimer);
+          recognitionRestartTimer = null;
+        }
+      }
+
+      function resetRecognitionState() {
+        clearRecognitionRestartTimer();
+        clearSilenceTimer();
+        voiceRoundActive = false;
+        userStoppedRecognition = false;
+        submissionRequested = false;
+        voiceRoundCompleted = false;
+        isProcessingQuestion = false;
+        startingRecognition = false;
+        lastRecognitionError = null;
+        recognitionRestartCount = 0;
+        silenceWarnings = 0;
+        lastHeardAt = 0;
+        currentTranscript = "";
+        lastLiveTranscript = "";
+      }
+
+      function destroyRecognition(reason) {
+        if (!recognition) return;
+        console.log("Recognition destroyed:", reason);
+        ignoreNextOnend = true;
+        try {
+          recognition.onstart = null;
+          recognition.onresult = null;
+          recognition.onerror = null;
+          recognition.onend = null;
+          recognition.onspeechstart = null;
+          recognition.onspeechend = null;
+          recognition.onaudiostart = null;
+          recognition.onaudioend = null;
+          recognition.onsoundstart = null;
+          recognition.onsoundend = null;
+          recognition.onnomatch = null;
+        } catch (e) {
+          console.warn("Failed to clear recognition handlers", e);
+        }
+
+        try {
+          recognition.abort();
+          console.log("Recognition aborted");
+        } catch (e) {
+          console.warn("Recognition abort failed", e);
+        }
+
+        try {
+          recognition.stop();
+          console.log("Recognition stopped");
+        } catch (e) {
+          console.warn("Recognition stop failed", e);
+        }
+
+        recognition = null;
+      }
+
+      function cleanupRecognition(reason) {
+        console.log("Cleaning up recognition:", reason);
+        clearRecognitionRestartTimer();
+        destroyRecognition(reason);
+        releaseMicrophone();
+        resetRecognitionState();
+      }
+
+      function scheduleRecognitionRestart(reason, delayMs = 1200) {
+        if (
+          recognitionRestartTimer ||
+          voiceRoundCompleted ||
+          submissionRequested ||
+          userStoppedRecognition
+        ) {
+          return;
+        }
+        console.warn(
+          "Scheduling recognition restart:",
+          reason,
+          "delay=",
+          delayMs,
+          "attempt=",
+          recognitionRestartCount + 1
+        );
+        recognitionRestartTimer = setTimeout(() => {
+          recognitionRestartTimer = null;
+          restartRecognition(reason);
+        }, delayMs);
+      }
+
+      function restartRecognition(reason) {
+        if (voiceRoundCompleted || submissionRequested || userStoppedRecognition) {
+          return;
+        }
+
+        recognitionRestartCount += 1;
+        if (recognitionRestartCount > 8) {
+          setStatus(
+            "Speech recognition is unstable. Reload the page or try again in a few moments.",
+            false
+          );
+          console.error(
+            "Speech recognition restart throttled after",
+            recognitionRestartCount,
+            "attempts"
+          );
+          return;
+        }
+
+        console.warn("Restarting speech recognition:", reason, "attempt", recognitionRestartCount);
+        ignoreNextOnend = true;
+        if (resetRecognition(reason)) {
+          safeRecognitionStart(reason);
+        }
+      }
+
+      function renderAnswerHistory() {
+        if (!answers.length) {
+          hrRoundLog.textContent = "No answers yet.";
+          return;
+        }
+        hrRoundLog.textContent = answers
+          .map((answer, idx) => `${idx + 1}. ${answer}`)
+          .join("\n\n");
+      }
+
+      function appendHiddenAnswer(answerText) {
+        const answerInput = document.createElement("input");
+        answerInput.type = "hidden";
+        answerInput.name = "answers[]";
+        answerInput.value = answerText;
+        hiddenAnswers.appendChild(answerInput);
+      }
+
+      function finalizeCurrentAnswer() {
+        if (voiceRoundCompleted || isProcessingQuestion) return;
+        if (!beginQuestionProcessing()) return;
+
+        const rawText = (lastLiveTranscript || currentTranscript || "").trim();
+        const cleaned = rawText
+          .replace(/\b(finish(?:ed)?|done|stop|next)\b[.!?]*$/i, "")
+          .trim();
+        const answerText = cleaned.length ? cleaned : "";
+        const answeredQuestionNumber = questionIndex + 1;
+
+        console.log(`Current Question = ${answeredQuestionNumber}`);
+        console.log("Answer Saved");
+
+        if (recognition) {
+          ignoreNextOnend = true;
+          try {
+            recognition.stop();
+          } catch (e) {
+            console.warn("Failed to stop recognition during answer finalize", e);
+          }
+        }
+
+        answers.push(answerText);
+        appendHiddenAnswer(answerText);
+        renderAnswerHistory();
+        console.log(`Question ${answeredQuestionNumber}/${EXPECTED_HR_QUESTIONS} saved`);
+
+        questionIndex += 1;
+        currentTranscript = "";
+        lastLiveTranscript = "";
+        clearAnswerTimeout();
+
+        if (questionIndex >= questions.length) {
+          voiceRoundCompleted = true;
+          if (questionIndex < EXPECTED_HR_QUESTIONS) {
+            console.warn(
+              `Unexpected completion before ${EXPECTED_HR_QUESTIONS} questions: only ${questionIndex} answered.`
+            );
+          }
+          console.log("All 6 HR questions completed");
+          console.log("Calculating HR Score");
+          setStatus("All questions completed. Submitting your responses now.", true);
+          if (recognition) {
+            try {
+              ignoreNextOnend = true;
+              recognition.stop();
+            } catch (e) {
+              console.warn("Failed to stop recognition before submit", e);
+            }
+          }
+          endQuestionProcessing();
+          setTimeout(() => {
+            hrVoiceForm.submit();
+          }, 300);
+          return;
+        }
+
+        console.log(`Moving to Question ${questionIndex + 1}`);
+        setStatus("Answer recorded. Preparing the next question…", true);
+        renderCurrentQuestion();
+        askQuestion(questionIndex);
+        endQuestionProcessing();
+      }
+
+      function startSilenceTimer() {
+        clearSilenceTimer();
+        silenceTimer = setTimeout(() => {
+          silenceWarnings += 1;
+          if (silenceWarnings === 1) {
+            setStatus("Still listening… say something or say finish when done.", true);
+          } else if (silenceWarnings === 2) {
+            setStatus("No speech detected yet. Continue answering or say finish to submit.", true);
+          } else {
+            setStatus("If you're ready, say finish or click Finish Answer to submit.", true);
+          }
+        }, 6000);
+      }
+
+      function clearSilenceTimer() {
+        if (silenceTimer) {
+          clearTimeout(silenceTimer);
+          silenceTimer = null;
+        }
+      }
+
+      function clearAnswerTimeout() {
+        if (answerTimeout) {
+          clearTimeout(answerTimeout);
+          answerTimeout = null;
+        }
+      }
+
+      function beginQuestionProcessing() {
+        if (isProcessingQuestion) {
+          console.warn("Duplicate question processing event ignored.");
+          return false;
+        }
+        isProcessingQuestion = true;
+        return true;
+      }
+
+      function endQuestionProcessing() {
+        isProcessingQuestion = false;
+      }
+
+      function startAnswerTimeout(sessionId) {
+        clearAnswerTimeout();
+        answerTimeout = setTimeout(() => {
+          if (
+            voiceRoundCompleted ||
+            submissionRequested ||
+            isProcessingQuestion ||
+            sessionId !== currentQuestionSessionId
+          )
+            return;
+          submissionRequested = true;
+          console.log(
+            `Question ${questionIndex + 1}/${EXPECTED_HR_QUESTIONS} timed out without an answer.`
+          );
+          setStatus("No answer detected. Saving empty response and moving on.", true);
+          if (recognition) {
+            ignoreNextOnend = true;
+            try {
+              recognition.stop();
+            } catch (e) {
+              console.warn("Failed to stop recognition on timeout", e);
+            }
+          }
+          finalizeCurrentAnswer();
+        }, ANSWER_TIMEOUT_MS);
       }
 
       function stopRecognitionForTts() {
@@ -414,20 +695,37 @@
         try {
           ignoreNextOnend = true;
           recognition.stop();
+          console.log("Recognition stopped for TTS");
         } catch (e) {
-          /* ignore */
+          console.warn("Failed to stop recognition for TTS", e);
         }
         voiceRoundActive = false;
         updateVoiceState();
       }
 
+      function resetRecognition(reason) {
+        cleanupRecognition(reason);
+        recognition = initRecognition();
+        return !!recognition;
+      }
+
       function safeRecognitionStart(reason) {
-        if (!recognition) return;
+        if (!recognition || voiceRoundActive || startingRecognition) return;
+        startingRecognition = true;
         try {
           recognition.start();
+          console.log("Recognition start requested:", reason);
         } catch (e) {
-          // Chrome throws InvalidStateError if start() is called while already started.
+          startingRecognition = false;
+          console.warn("Recognition start failed:", e);
           if (e && e.name === "InvalidStateError") {
+            if (resetRecognition(reason)) {
+              setTimeout(() => safeRecognitionStart(reason), 400);
+            }
+            return;
+          }
+          if (resetRecognition(reason)) {
+            setTimeout(() => safeRecognitionStart(reason), 400);
             return;
           }
           setStatus(
@@ -437,165 +735,6 @@
             false
           );
         }
-      }
-
-      function updateVoiceState() {
-        if (!hrVoiceStateText) return;
-        hrVoiceStateText.textContent =
-          "voice_round_active: " + (voiceRoundActive ? "true" : "false");
-      }
-
-      function setStatus(html, listening) {
-        hrStatusText.innerHTML = html;
-        hrMicText.textContent = listening ? "Recording..." : "Idle";
-        hrMicDot.classList.toggle("listening", !!listening);
-      }
-
-      function speakQuestion(q) {
-  return new Promise((resolve) => {
-    let settled = false;
-
-    ttsInProgress = true;
-    stopRecognitionForTts();
-
-    const finishAndListen = () => {
-      if (settled) return;
-      settled = true;
-
-      isSpeaking = false;
-      ttsInProgress = false;
-
-      // 🔥 IMPORTANT FIX
-      setTimeout(() => {
-        safeRecognitionStart("after-tts");
-        resolve();
-      }, 500); // increased delay
-    };
-
-    try {
-      window.speechSynthesis.cancel();
-      isSpeaking = true;
-
-      const utter = new SpeechSynthesisUtterance(q);
-      utter.rate = 0.9;
-
-      utter.onend = finishAndListen;
-      utter.onerror = finishAndListen;
-
-      window.speechSynthesis.speak(utter);
-
-      setTimeout(finishAndListen, 4000);
-    } catch (e) {
-      finishAndListen();
-    }
-  });
-}
-
-      function clearSilenceTimer() {
-        if (silenceTimer) clearTimeout(silenceTimer);
-        silenceTimer = null;
-      }
-
-      function startSilenceTimer() {
-        clearSilenceTimer();
-        // If the user goes silent, warn, but DO NOT stop recognition.
-        // Stopping/restarting can cause Chrome to fail the next `start()`,
-        // which breaks the "say finish" flow.
-        silenceTimer = setTimeout(() => {
-          if (!voiceRoundActive || voiceRoundCompleted) return;
-          if (submissionRequested) return;
-
-          lastHeardAt = lastHeardAt || Date.now();
-          const now = Date.now();
-          silenceWarnings += 1;
-          setStatus(
-            "⚠ Still waiting for your answer. Say <b>finish</b> when done.",
-            true
-          );
-          // Keep listening; schedule another check.
-          startSilenceTimer();
-        }, 7000);
-      }
-
-      function finalizeCurrentAnswer() {
-        clearSilenceTimer();
-
-        let cleaned = (currentTranscript || "").trim();
-        // SpeechRecognition transcripts may include punctuation/spacing.
-        // Strip the keyword even if it's not tokenized as a whole word.
-        cleaned = cleaned.replace(/finish|done/gi, "").trim();
-
-        // If the user said "finish/done" but the transcript becomes empty
-        // (common when the keyword is recognized but the answer isn't),
-        // do NOT block the interview from progressing.
-        if (!cleaned) {
-          if (submissionRequested) {
-            cleaned = "(no transcript captured)";
-          } else {
-            silenceWarnings += 1;
-            hrSpokenLive.textContent = "—";
-            setStatus(
-              "⚠ No answer detected. Please try again. Say <b>finish</b> to submit.",
-              true
-            );
-
-            currentTranscript = "";
-            setTimeout(() => {
-              safeRecognitionStart("retry-after-empty");
-            }, 650);
-            return;
-          }
-        }
-
-        answers[questionIndex] = cleaned;
-
-        const q = questions[questionIndex] || ("Question " + (questionIndex + 1));
-        hrRoundLog.innerHTML =
-          (hrRoundLog.innerHTML && hrRoundLog.innerHTML !== "No answers yet."
-            ? hrRoundLog.innerHTML + "<br><br>"
-            : "") +
-          "<b>Q" +
-          (questionIndex + 1) +
-          ":</b> " +
-          q +
-          "<br>" +
-          "<b>Answer:</b> " +
-          cleaned;
-
-        questionIndex += 1;
-
-        if (questionIndex >= questions.length) {
-          voiceRoundCompleted = true;
-
-          hrCurrentQuestion.textContent = "Interview Completed";
-          hrProgressText.textContent = "All questions completed.";
-          setStatus("Processing final submission…", false);
-
-          hiddenAnswers.innerHTML = "";
-          for (const a of answers) {
-            const input = document.createElement("input");
-            input.type = "hidden";
-            input.name = "answers[]";
-            input.value = a || "";
-            hiddenAnswers.appendChild(input);
-          }
-
-          setTimeout(() => hrVoiceForm.submit(), 750);
-          return;
-        }
-
-        // Next question (do NOT switch to typing mode; keep voice flow).
-        const nextQ = questions[questionIndex];
-        currentTranscript = "";
-        hrSpokenLive.textContent = "—";
-        hrCurrentQuestion.textContent = nextQ;
-        hrProgressText.textContent =
-          "Question " + (questionIndex + 1) + " of " + questions.length;
-
-        setStatus("Recording… Say <b>finish</b> to submit.", true);
-        // Re-enable keyword detection for the next answer.
-        submissionRequested = false;
-        speakQuestion(nextQ).then(() => {});
       }
 
       function initRecognition() {
@@ -609,20 +748,29 @@
           return null;
         }
 
+        // Reuse existing instance if present (singleton)
+        if (recognition) {
+          return recognition;
+        }
+
         recognition = new SR();
         recognition.lang = "en-US";
         recognition.continuous = true;
         recognition.interimResults = true;
         try {
-          recognition.maxAlternatives = 1;
+          recognition.maxAlternatives = 5;
         } catch (e) {}
-        // Chrome/Edge are more stable with shorter recognition sessions; onend restarts listening.
-        const ua = navigator.userAgent || "";
-        const isChromiumLike =
-          /Chrome|Chromium|Edg|CriOS|OPR|Opera/i.test(ua) && !/Firefox/i.test(ua);
-        recognition.continuous = !isChromiumLike;
+
+        // Debug helpers and restart throttling
+        recognition._lastEnd = 0;
+        recognition._restartAttempts = 0;
 
         recognition.onstart = function () {
+          startingRecognition = false;
+          clearRecognitionRestartTimer();
+          recognitionRestartCount = 0;
+          lastRecognitionError = null;
+          console.log("Speech recognition started");
           voiceRoundActive = true;
           updateVoiceState();
           submissionRequested = false;
@@ -632,7 +780,7 @@
           setStatus(
             isSpeaking || ttsInProgress
               ? "Please wait… question audio is playing."
-              : "Listening… Say <b>finish</b> to submit.",
+              : "Listening… Say <b>finish</b>, <b>done</b>, or <b>stop</b> to submit.",
             true
           );
           hrSpokenLive.textContent = "Listening...";
@@ -645,61 +793,172 @@
 
         recognition.onerror = function (ev) {
           const code = ev && ev.error ? ev.error : "unknown";
-          let msg =
-            "Speech recognition issue (<code>" +
-            safeText(code) +
-            "</code>). ";
+          lastRecognitionError = code;
+          startingRecognition = false;
+          console.error("Speech recognition error:", code, ev);
+          let msg = "Speech recognition issue (" + safeText(code) + "). ";
+          voiceRoundActive = false;
+          updateVoiceState();
+          clearRecognitionRestartTimer();
+
           if (code === "not-allowed") {
-            msg +=
-              "Allow microphone for this site in Chrome (lock icon → Site settings → Microphone), then click <b>Start Voice</b> again.";
-          } else if (code === "network") {
-            msg +=
-              "Chrome needs a network connection for speech-to-text. Check Wi‑Fi/VPN, or try again.";
-          } else if (code === "no-speech") {
-            msg += "No speech heard — speak closer to the mic, then try again.";
-          } else if (code === "aborted") {
-            msg += "Listening was interrupted; click <b>Start Voice</b> if needed.";
-          } else {
-            msg +=
-              "Click <b>Start Voice</b> again. Use <b>HTTPS</b> or <b>localhost</b> (required by Chrome).";
+            msg += "Allow microphone for this site in browser settings, then click Start Voice again.";
+            setStatus(msg, false);
+            return;
           }
+
+          if (code === "network") {
+            msg +=
+              "Temporary network failure detected. Retrying recognition automatically.";
+            setStatus(msg, true);
+            scheduleRecognitionRestart("network", 1200);
+            return;
+          }
+
+          if (code === "no-speech") {
+            msg += "No speech heard — retrying listening automatically.";
+            setStatus(msg, true);
+            scheduleRecognitionRestart("no-speech", 1200);
+            return;
+          }
+
+          if (code === "audio-capture" || code === "aborted") {
+            msg += "Audio capture was interrupted; retrying automatically.";
+            setStatus(msg, true);
+            scheduleRecognitionRestart(code, 1200);
+            return;
+          }
+
+          msg += "Click Start Voice again. Use HTTPS or localhost if required.";
           setStatus(msg, false);
         };
 
+        recognition.onspeechstart = function () {
+          if (recognition._questionSession !== currentQuestionSessionId) {
+            return;
+          }
+          console.log("Speech detected (onspeechstart)");
+          setStatus("Listening — speaking detected. Keep answering, and say finish when done.", true);
+          clearSilenceTimer();
+        };
+
+        recognition.onspeechend = function () {
+          if (recognition._questionSession !== currentQuestionSessionId) {
+            return;
+          }
+          console.log("Speech ended (onspeechend)");
+          if (voiceRoundActive && !submissionRequested && !voiceRoundCompleted) {
+            setStatus("Still listening… say finish when you are done.", true);
+            startSilenceTimer();
+          }
+        };
+
+        recognition.onsoundstart = function () {
+          if (recognition._questionSession !== currentQuestionSessionId) {
+            return;
+          }
+          console.log("Audio started (onsoundstart)");
+          if (voiceRoundActive) {
+            setStatus("Listening — speaking detected. Keep answering, and say finish when done.", true);
+            clearSilenceTimer();
+          }
+        };
+
+        recognition.onaudiostart = function () {
+          if (recognition._questionSession !== currentQuestionSessionId) {
+            return;
+          }
+          console.log("Audio capture started (onaudiostart)");
+          if (voiceRoundActive) {
+            setStatus("Listening — speaking detected. Keep answering, and say finish when done.", true);
+            clearSilenceTimer();
+          }
+        };
+
+        recognition.onaudioend = function () {
+          if (recognition._questionSession !== currentQuestionSessionId) {
+            return;
+          }
+          console.log("Audio capture ended (onaudioend)");
+          if (voiceRoundActive && !submissionRequested && !voiceRoundCompleted) {
+            setStatus("Still listening… say when you are done.", true);
+            startSilenceTimer();
+          }
+        };
+
+        recognition.onsoundend = function () {
+          if (recognition._questionSession !== currentQuestionSessionId) {
+            return;
+          }
+          console.log("Sound ended (onsoundend)");
+          if (voiceRoundActive && !submissionRequested && !voiceRoundCompleted) {
+            setStatus("Still listening… say finish when you are done.", true);
+            startSilenceTimer();
+          }
+        };
+
+        recognition.onnomatch = function () {
+          if (recognition._questionSession !== currentQuestionSessionId) {
+            return;
+          }
+          console.log("No match (onnomatch)");
+          if (voiceRoundActive && !voiceRoundCompleted) {
+            setStatus("No recognized speech yet. Please speak more clearly and slowly.", true);
+          }
+        };
+
         recognition.onresult = function (event) {
+          if (recognition._questionSession !== currentQuestionSessionId) {
+            console.debug(
+              "Ignoring onresult from stale question session",
+              recognition._questionSession,
+              currentQuestionSessionId
+            );
+            return;
+          }
+          console.log("onresult event", event);
           // Don't treat question TTS as the user's answer.
           if (isSpeaking) return;
 
-          let interim = "";
-          let finalText = "";
+          let interimTranscript = "";
 
           for (let i = event.resultIndex; i < event.results.length; i++) {
-            const res = event.results[i];
-            const t = res[0].transcript;
-            if (res.isFinal) finalText += t;
-            else interim += t;
+            const result = event.results[i];
+            const transcript = (result[0].transcript || "").trim();
+
+            if (transcript) {
+              if (result.isFinal) {
+                currentTranscript = ((currentTranscript || "") + " " + transcript).trim();
+              } else {
+                interimTranscript += " " + transcript;
+              }
+            }
           }
 
-          const live = (currentTranscript + " " + finalText + " " + interim).trim();
-          currentTranscript = live;
+          // If the transcript ends with a finish keyword, wait for a clear end marker
+          // before submitting to avoid cutting off mid-sentence.
+          const fullTranscript = ((currentTranscript || "") + " " + interimTranscript).trim();
+          if (fullTranscript.length > 0) {
+            lastLiveTranscript = fullTranscript;
+          }
+
+          interimTranscript = interimTranscript.trim();
+          const live = ((currentTranscript || "") + (interimTranscript ? " " + interimTranscript : "")).trim();
+          lastLiveTranscript = live;
           hrSpokenLive.textContent = live.length ? live : "—";
           lastHeardAt = Date.now();
 
-          const lower = live.toLowerCase();
-          // Robust keyword detection:
-          // - remove non-letters so "finish." / "fin ish" still matches "finish"
-          // - then use substring checks
-          const normalized = lower.replace(/[^a-z]/g, "");
-          const hasFinish = normalized.includes("finish") || normalized.includes("done");
+          console.debug("Transcript received:", live);
 
-          if (hasFinish && !submissionRequested && !voiceRoundCompleted) {
+          const lower = live.toLowerCase();
+          const hasFinish = /\b(finish(?:ed)?|done|stop)\b/i.test(lower);
+          const finishAtEnd = /(?:finish(?:ed)?|done|stop)[.!?]*\s*$/.test(lower);
+
+          if (hasFinish && finishAtEnd && !submissionRequested && !voiceRoundCompleted) {
             submissionRequested = true;
             setStatus("Processing… submitting your answer.", true);
             clearSilenceTimer();
-            // Keep recognition running to avoid Chrome restart issues.
             finalizeCurrentAnswer();
-            // After finalize advances, finalizeCurrentAnswer will reset
-            // submissionRequested when the next question begins.
             return;
           }
 
@@ -707,6 +966,17 @@
         };
 
         recognition.onend = function () {
+          if (recognition._questionSession !== currentQuestionSessionId) {
+            console.debug(
+              "Ignoring onend from stale question session",
+              recognition._questionSession,
+              currentQuestionSessionId
+            );
+            return;
+          }
+          console.log("Speech recognition ended");
+          const now = Date.now();
+
           voiceRoundActive = false;
           updateVoiceState();
           hrStopBtn.style.display = "none";
@@ -717,11 +987,15 @@
             return;
           }
 
+          if (userStoppedRecognition) {
+            userStoppedRecognition = false;
+            return;
+          }
+
           if (ttsInProgress || isSpeaking) {
             return;
           }
 
-          // If finish was detected -> finalize.
           if (submissionRequested) {
             submissionRequested = false;
             return;
@@ -729,66 +1003,172 @@
 
           if (voiceRoundCompleted) return;
 
-          // No finish detected: prompt again for the SAME question.
-          setStatus(
-            "⚠ No answer detected yet. Please speak your answer again. Say <b>finish</b> when done.",
-            true
-          );
+          if (lastRecognitionError === "network" || lastRecognitionError === "no-speech" || lastRecognitionError === "audio-capture" || lastRecognitionError === "aborted") {
+            console.debug("Recognition ended due to recoverable error:", lastRecognitionError);
+            return;
+          }
 
-          // Restart for the same question.
+          const transcriptAvailable = (lastLiveTranscript || "").trim().length > 0;
+          if (transcriptAvailable) {
+            console.log(
+              "Recognition ended with partial transcript. Retrying the same question."
+            );
+            if (resetRecognition("onend-partial")) {
+              setTimeout(() => safeRecognitionStart("onend-partial"), 400);
+            }
+            return;
+          }
+
+          if (!recognition._lastEnd || now - recognition._lastEnd > 30000) {
+            recognition._restartAttempts = 0;
+          }
+          recognition._lastEnd = now;
+          recognition._restartAttempts = (recognition._restartAttempts || 0) + 1;
+
+          if (recognition._restartAttempts > 6) {
+            setStatus("Speech recognition repeatedly stopped; please reload the page or try a different browser.", false);
+            console.error("Speech recognition restart throttled (attempts)", recognition._restartAttempts);
+            return;
+          }
+
+          setStatus("⚠ No answer detected yet. Reinitializing recognition and trying again.", true);
+          console.debug("Speech recognition will attempt restart (#", recognition._restartAttempts, ")");
+
           setTimeout(() => {
             voiceRoundActive = false;
-            safeRecognitionStart("onend-restart");
-          }, 500);
+            if (resetRecognition("onend-restart")) {
+              console.log("Speech recognition restarted");
+              safeRecognitionStart("onend-restart");
+            }
+          }, 600);
         };
 
         return recognition;
       }
 
+      async function ensureMicrophonePermission() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          setStatus(
+            "Microphone access is not available in this browser. Use Chrome or Edge.",
+            false
+          );
+          return false;
+        }
+
+        if (mediaStream) {
+          return true;
+        }
+
+        try {
+          mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          return true;
+        } catch (err) {
+          console.error("Microphone permission denied or unavailable", err);
+          if (err && err.name === "NotAllowedError") {
+            setStatus(
+              "Microphone permission was denied. Allow it in browser settings and try again.",
+              false
+            );
+          } else if (err && err.name === "NotFoundError") {
+            setStatus(
+              "No microphone was found. Connect a microphone and reload the page.",
+              false
+            );
+          } else {
+            setStatus(
+              "Unable to access the microphone. Please check your browser permissions.",
+              false
+            );
+          }
+          return false;
+        }
+      }
+
+      function speakQuestion(questionText) {
+        return new Promise((resolve) => {
+          if (!window.speechSynthesis || !speechSynthesis.getVoices) {
+            return resolve();
+          }
+
+          const utterance = new SpeechSynthesisUtterance(questionText);
+          utterance.lang = "en-US";
+          utterance.rate = 1.0;
+          utterance.pitch = 1.0;
+          utterance.onstart = () => {
+            ttsInProgress = true;
+            stopRecognitionForTts();
+          };
+          utterance.onend = () => {
+            ttsInProgress = false;
+            resolve();
+          };
+          utterance.onerror = () => {
+            ttsInProgress = false;
+            resolve();
+          };
+
+          speechSynthesis.cancel();
+          speechSynthesis.speak(utterance);
+        });
+      }
+
       function askQuestion(index) {
+        currentQuestionSessionId += 1;
         const q = questions[index] || ("Question " + (index + 1));
+        console.log(`Question ${index + 1}/${questions.length} started`);
         hrCurrentQuestion.textContent = q;
         hrProgressText.textContent =
           "Question " + (index + 1) + " of " + questions.length;
         hrSpokenLive.textContent = "—";
 
         currentTranscript = "";
-        setStatus("Recording… Say <b>finish</b> to submit.", true);
-        speakQuestion(q).then(() => {});
+        lastLiveTranscript = "";
+        userStoppedRecognition = false;
+        submissionRequested = false;
+        setStatus("Preparing question...", false);
+
+        speakQuestion(q).then(() => {
+          if (!voiceRoundCompleted && recognition) {
+            recognition._questionSession = currentQuestionSessionId;
+            setStatus("Waiting for Answer...", true);
+            console.log(`Waiting for Answer...`);
+            safeRecognitionStart("question-start");
+            startAnswerTimeout(currentQuestionSessionId);
+          }
+        });
       }
 
-      // Safety: stop recognition when the tab/page is exiting.
-      window.addEventListener("beforeunload", () => {
-        try {
-          recognition && recognition.stop();
-        } catch (e) {}
+      // Safety: clean up audio streams when the tab/page is exiting.
+      function handlePageUnload() {
+        cleanupRecognition("page-unload");
+      }
+
+      window.addEventListener("beforeunload", handlePageUnload);
+      window.addEventListener("pagehide", handlePageUnload);
+      window.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") {
+          cleanupRecognition("visibility-hidden");
+        }
       });
+      window.addEventListener("unload", handlePageUnload);
 
       hrStartBtn.addEventListener("click", async () => {
-        if (voiceRoundCompleted) return;
-
-        // Chrome: mic permission must be granted; also ties activation to the click gesture.
-        try {
-          if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            await navigator.mediaDevices.getUserMedia({ audio: true });
-          }
-        } catch (e) {
-          setStatus(
-            "⚠ Microphone blocked. In Chrome: click the lock icon → Site settings → Microphone → Allow, then click <b>Start Voice</b> again.",
-            false
-          );
-          return;
-        }
+        cleanupRecognition("retake-start");
 
         if (!recognition) recognition = initRecognition();
         if (!recognition) return;
+
+        const permissionGranted = await ensureMicrophonePermission();
+        if (!permissionGranted) return;
 
         questionIndex = 0;
         voiceRoundActive = false;
         voiceRoundCompleted = false;
         submissionRequested = false;
+        isProcessingQuestion = false;
         answers = [];
         currentTranscript = "";
+        lastLiveTranscript = "";
         silenceWarnings = 0;
         hiddenAnswers.innerHTML = "";
         hrRoundLog.textContent = "No answers yet.";
@@ -796,36 +1176,52 @@
         ttsInProgress = false;
         isSpeaking = false;
 
-        // Do NOT start SpeechRecognition until after question TTS (Chrome reliability).
         askQuestion(0);
       });
 
       hrStopBtn.addEventListener("click", () => {
+        userStoppedRecognition = true;
         try {
+          ignoreNextOnend = true;
           recognition && recognition.stop();
         } catch (e) {}
         voiceRoundActive = false;
         updateVoiceState();
         setStatus(
-          "Recording stopped. Say <b>finish</b> to submit when you're ready.",
+          "Recording stopped. Say <b>finish</b>, <b>done</b>, or <b>stop</b> to submit when you're ready.",
           false
         );
+        // Release audio stream to free microphone for other uses
+        if (mediaStream) {
+          mediaStream.getTracks().forEach(track => {
+            try {
+              track.stop();
+            } catch (e) {}
+          });
+          mediaStream = null;
+        }
       });
 
       if (hrFinishBtn) {
         hrFinishBtn.addEventListener("click", () => {
-          if (voiceRoundCompleted) return;
+          if (voiceRoundCompleted || isProcessingQuestion) return;
           if (!recognition) return;
 
           submissionRequested = true;
           clearSilenceTimer();
           setStatus("Processing… submitting your answer.", true);
+          ignoreNextOnend = true;
+          try {
+            recognition.stop();
+          } catch (e) {
+            console.warn("Failed to stop recognition on manual finish", e);
+          }
 
           // Finalize immediately using whatever transcript is currently captured.
           finalizeCurrentAnswer();
         });
       }
+
     </script>
   </body>
 </html>
-

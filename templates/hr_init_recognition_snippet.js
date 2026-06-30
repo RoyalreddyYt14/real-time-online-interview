@@ -1,0 +1,1 @@
+// helper snippet for building initRecognition - not used at runtime

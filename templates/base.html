@@ -9,6 +9,11 @@
   href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
   referrerpolicy="no-referrer"
 >
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+  referrerpolicy="no-referrer"
+>
 
 <div class="rt-user-root" id="rtUserDropdownRoot" aria-live="polite">
 
@@ -22,7 +27,7 @@
   >
     <span class="rt-user-left">
       <span class="rt-bell-wrap" aria-hidden="true">
-        <i class="fa-solid fa-bell"></i>
+        <i class="bi bi-bell"></i>
         <span class="rt-notif-dot" id="rtNotifDot" aria-hidden="true"></span>
         <span class="rt-notif-emoji" id="rtNotifEmoji" aria-hidden="true">🔴</span>
         <span class="rt-notif-count" id="rtNotifCount">0</span>
@@ -31,7 +36,7 @@
         {{ user.name if user is defined and user else "Guest" }}
       </span>
     </span>
-    <i class="fa-solid fa-chevron-down rt-chevron" aria-hidden="true"></i>
+    <i class="bi bi-chevron-down rt-chevron" aria-hidden="true"></i>
   </button>
 
   <div class="rt-dropdown-menu" id="rtDropdownMenu" role="menu" aria-label="User menu">
@@ -39,37 +44,37 @@
       {% set effective_role = session.get('user_role') or session.get('role') %}
       {% if effective_role == 'admin' %}
         <a class="rt-menu-item" href="/admin" role="menuitem">
-          <i class="fa-solid fa-gear"></i> Admin Panel
+          <i class="bi bi-gear"></i> Admin Panel
         </a>
       {% elif session.get('user_id') %}
         <a class="rt-menu-item" href="/profile" role="menuitem">
-          <i class="fa-regular fa-user"></i> Profile
+          <i class="bi bi-person"></i> Profile
         </a>
         <a class="rt-menu-item" href="/resume" role="menuitem">
-          <i class="fa-regular fa-file"></i> Resume
+          <i class="bi bi-file-earmark-text"></i> Resume
         </a>
         <a class="rt-menu-item" href="/performance" role="menuitem">
-          <i class="fa-solid fa-chart-column"></i> Performance
+          <i class="bi bi-bar-chart"></i> Performance
         </a>
         <a class="rt-menu-item" href="/settings" role="menuitem">
-          <i class="fa-solid fa-gear"></i> Settings
+          <i class="bi bi-gear"></i> Settings
         </a>
 
         <button type="button" class="rt-menu-item rt-menu-button" id="rtNotificationsBtn">
-          <i class="fa-solid fa-bell"></i> Notifications
+          <i class="bi bi-bell"></i> Notifications
         </button>
       {% else %}
         <a class="rt-menu-item" href="/login" role="menuitem">
-          <i class="fa-regular fa-user"></i> Login
+          <i class="bi bi-person"></i> Login
         </a>
         <a class="rt-menu-item" href="/register" role="menuitem">
-          <i class="fa-regular fa-file"></i> Register
+          <i class="bi bi-file-earmark-text"></i> Register
         </a>
       {% endif %}
 
       <div class="rt-dark-toggle">
         <div class="rt-dark-toggle-left">
-          <i class="fa-solid fa-moon"></i>
+          <i class="bi bi-moon"></i>
           <span>Dark Mode Toggle</span>
         </div>
         <label class="rt-switch" aria-label="Toggle dark mode">
@@ -80,12 +85,12 @@
       </div>
 
       <button type="button" class="rt-menu-item rt-menu-button" id="rtSupportBtn">
-        <i class="fa-regular fa-circle-question"></i> Help / Support
+        <i class="bi bi-question-circle"></i> Help / Support
       </button>
 
       {% if session.get('user_id') %}
         <a class="rt-menu-item rt-menu-danger" href="/logout" role="menuitem">
-          <i class="fa-solid fa-right-from-bracket"></i> Logout
+          <i class="bi bi-box-arrow-right"></i> Logout
         </a>
       {% endif %}
     </div>
@@ -100,7 +105,7 @@
 
       <div class="rt-live-row">
         <span class="rt-live-label">Timer</span>
-        <span class="rt-live-timer" id="rtLiveTimer">15:00</span>
+        <span class="rt-live-timer" id="rtLiveTimer">120:00</span>
       </div>
 
       <div class="rt-live-row">
@@ -117,6 +122,19 @@
 </div>
 
 <div class="rt-toast-container" id="rtToastContainer" aria-live="polite" aria-atomic="true"></div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'danger' else 'warning' if category == 'warning' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
 
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script defer src="{{ url_for('static', filename='js/main.js') }}"></script>

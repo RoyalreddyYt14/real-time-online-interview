@@ -33,7 +33,10 @@
 <!-- SIDEBAR -->
 
 <div class="sidebar">
-<a href="/admin" class="active"><i class="bi bi-gear"></i> Admin Panel</a>
+<a href="/admin" class="{{ 'active' if active_page == 'dashboard' else '' }}"><i class="bi bi-gear"></i> Admin Panel</a>
+<a href="/admin/questions" class="{{ 'active' if active_page == 'questions' else '' }}"><i class="bi bi-journal-text"></i> Manage Questions</a>
+<a href="/admin/interviews" class="{{ 'active' if active_page == 'interviews' else '' }}"><i class="bi bi-briefcase"></i> Manage Interviews</a>
+<a href="/admin/reports" class="{{ 'active' if active_page == 'reports' else '' }}"><i class="bi bi-bar-chart"></i> Reports</a>
 <a href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
 
 </div>

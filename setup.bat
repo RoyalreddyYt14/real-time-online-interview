@@ -2,34 +2,48 @@
 REM Real-Time Online Interview System - Quick Setup Script (Windows)
 REM This script helps set up the development environment quickly
 
+setlocal enabledelayedexpansion
+
 echo 🚀 Setting up Real-Time Online Interview System...
 echo.
 
-REM Check if Python is installed
-python --version >nul 2>&1
-if errorlevel 1 (
-    echo ❌ Python is not installed. Please install Python 3.8 or higher.
+REM Prefer Python 3.12 for compatibility with OpenCV and NumPy
+set PYTHON_EXE=
+for /f "delims=" %%i in ('python --version 2^>^&1') do set "PYTHON_VER=%%i"
+if defined PYTHON_VER (
+    echo %PYTHON_VER% | findstr /r /c:"Python 3\.12" >nul
+    if !errorlevel! equ 0 set "PYTHON_EXE=python"
+)
+
+if not defined PYTHON_EXE (
+    for /f "delims=" %%i in ('py -3.12 --version 2^>^&1') do set "PYTHON_VER=%%i"
+    if defined PYTHON_VER (
+        echo %PYTHON_VER% | findstr /r /c:"Python 3\.12" >nul
+        if !errorlevel! equ 0 set "PYTHON_EXE=py -3.12"
+    )
+)
+
+if not defined PYTHON_EXE (
+    echo ❌ Python 3.12 is required. Install Python 3.12 (64-bit) and rerun this script.
     pause
     exit /b 1
 )
 
-REM Check Python version
-for /f "tokens=2" %%i in ('python --version 2^>^&1') do set PYTHON_VERSION=%%i
-echo ✅ Python detected: %PYTHON_VERSION%
+echo ✅ Using %PYTHON_EXE%
 
 REM Create virtual environment if it doesn't exist
-if not exist "venv" (
+if not exist ".venv-1" (
     echo 📦 Creating virtual environment...
-    python -m venv venv
+    %PYTHON_EXE% -m venv .venv-1
 )
 
 REM Activate virtual environment
 echo 🔄 Activating virtual environment...
-call venv\Scripts\activate.bat
+call .venv-1\Scripts\activate.bat
 
-REM Upgrade pip
-echo ⬆️  Upgrading pip...
-pip install --upgrade pip
+REM Upgrade pip, setuptools, and wheel
+echo ⬆️  Upgrading pip, setuptools, and wheel...
+python -m pip install --upgrade pip setuptools wheel
 
 REM Install dependencies
 echo 📚 Installing dependencies...
@@ -51,9 +65,11 @@ echo.
 echo 🎉 Setup complete!
 echo.
 echo To run the application:
-echo 1. Activate the virtual environment: venv\Scripts\activate
+echo 1. Activate the virtual environment: .venv-1\Scripts\activate
 echo 2. Start the app: python app.py
 echo 3. Open your browser: http://localhost:5000
+echo.
+echo Or simply double-click: run.bat
 echo.
 echo Admin access: http://localhost:5000/admin
 echo Admin credentials: admin@example.com / admin123

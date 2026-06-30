@@ -1,62 +1,407 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Candidate Login - Real Time Online Interview</title>
 
-<title>Candidate Login</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-<link rel="stylesheet"
-href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      /* Animated background elements */
+      body::before {
+        content: '';
+        position: fixed;
+        width: 400px;
+        height: 400px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        top: -200px;
+        left: -200px;
+        animation: float 20s infinite ease-in-out;
+        z-index: 0;
+      }
+      
+      body::after {
+        content: '';
+        position: fixed;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 50%;
+        bottom: -150px;
+        right: -150px;
+        animation: float 15s infinite ease-in-out reverse;
+        z-index: 0;
+      }
+      
+      @keyframes float {
+        0%,
+        100% {
+          transform: translate(0, 0);
+        }
+        50% {
+          transform: translate(30px, 30px);
+        }
+      }
+      
+      .login-container {
+        position: relative;
+        z-index: 10;
+        width: min(100%, 840px);
+      }
+      
+      .login-box {
+        display: grid;
+        grid-template-columns: minmax(240px, 1fr) minmax(320px, 1fr);
+        width: 100%;
+        max-width: 840px;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 30px 70px rgba(0, 0, 0, 0.22);
+        animation: slideInUp 0.6s ease-out;
+      }
+      
+      .login-side,
+      .login-form-panel {
+        padding: 32px 30px;
+      }
+      
+      .login-side {
+        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      
+      .login-side h2 {
+        font-size: clamp(1.75rem, 2.3vw, 2.3rem);
+        margin-bottom: 0.8rem;
+      }
+      
+      .login-side p {
+        color: rgba(255, 255, 255, 0.92);
+        font-size: 0.98rem;
+        line-height: 1.65;
+        max-width: 20rem;
+        margin-bottom: 1.8rem;
+      }
+      
+      .feature-list {
+        display: grid;
+        gap: 1rem;
+      }
+      
+      .feature-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.85rem;
+      }
+      
+      .feature-item i {
+        font-size: 1.15rem;
+        margin-top: 0.15rem;
+      }
+      
+      .feature-item span {
+        line-height: 1.6;
+      }
+      
+      .login-form-panel {
+        background: rgba(255, 255, 255, 0.98);
+      }
+      
+      .login-header {
+        text-align: left;
+        color: #111827;
+        margin-bottom: 32px;
+      }
+      
+      .login-header i {
+        font-size: 42px;
+        color: #4f46e5;
+        margin-bottom: 12px;
+      }
+      
+      .login-header h2 {
+        color: #111827;
+        font-weight: 700;
+        font-size: 2rem;
+        margin-bottom: 8px;
+      }
+      
+      .login-header p {
+        color: #6b7280;
+        font-size: 15px;
+      }
+      
+      .form-group {
+        margin-bottom: 20px;
+      }
+      
+      .form-group label {
+        color: #111827;
+        font-weight: 600;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        font-size: 14px;
+      }
+      
+      .form-group label i {
+        color: #667eea;
+      }
+      
+      .form-control {
+        width: 100%;
+        border: 1px solid #d1d5db;
+        border-radius: 14px;
+        padding: 14px 16px;
+        font-size: 14px;
+        transition: border-color 0.25s ease, box-shadow 0.25s ease;
+        background: #f8fafc;
+      }
+      
+      .form-control:focus {
+        border-color: #4f46e5;
+        background: #ffffff;
+        box-shadow: 0 0 0 0.15rem rgba(99, 102, 241, 0.16);
+        outline: none;
+      }
+      
+      .login-btn {
+        width: 100%;
+        padding: 14px 18px;
+        background: #4f46e5;
+        color: white;
+        border: none;
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        position: relative;
+      }
+      
+      .login-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 30px rgba(79, 70, 229, 0.2);
+      }
+      
+      .divider {
+        text-align: center;
+        margin: 30px 0;
+        color: #6b7280;
+        font-size: 12px;
+        position: relative;
+      }
+      
+      .divider::before,
+      .divider::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        width: 40%;
+        height: 1px;
+        background: #e5e7eb;
+      }
+      
+      .divider::before {
+        left: 0;
+      }
+      
+      .divider::after {
+        right: 0;
+      }
+      
+      .register-link,
+      .admin-link {
+        text-align: center;
+        color: #6b7280;
+        font-size: 14px;
+      }
+      
+      .register-link a,
+      .admin-link a {
+        color: #4f46e5;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      
+      .register-link a:hover,
+      .admin-link a:hover {
+        text-decoration: underline;
+      }
+      
+      .social-links {
+        display: flex;
+        justify-content: center;
+        gap: 14px;
+        margin-top: 18px;
+      }
+      
+      .social-links a {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #e5e7eb;
+        color: #374151;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        font-size: 16px;
+      }
+      
+      .social-links a:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+      }
+      
+      .social-btn-google {
+        background: #4285f4;
+        color: white !important;
+      }
+      
+      .social-btn-github {
+        background: #111827;
+        color: white !important;
+      }
+      
+      .social-btn-microsoft {
+        background: linear-gradient(135deg, #0078d4 0%, #50e6ff 100%);
+        color: white !important;
+      }
+      
+      @media (max-width: 860px) {
+        .login-box {
+          grid-template-columns: 1fr;
+        }
+      
+        .login-container {
+          padding: 18px;
+        }
+      
+        .login-side,
+        .login-form-panel {
+          padding: 28px;
+        }
+      }
+      
+      @media (max-width: 640px) {
+        body {
+          padding: 16px 0;
+        }
+      
+        .login-box {
+          border-radius: 18px;
+        }
+      
+        .login-header h2 {
+          font-size: 1.75rem;
+        }
+      }
+    </style>
+  </head>
 
-<style>
+  <body>
+    <div class="login-container">
+      <div class="login-box">
+        <div class="login-side">
+          <h2>Welcome to your interview gateway</h2>
+          <p>Login securely to continue your interview journey, access dashboards, and keep your assessment on track.</p>
 
-body{
-background:#f4f6f9;
-font-family:Segoe UI;
-}
+          <div class="feature-list">
+            <div class="feature-item">
+              <i class="fas fa-rocket"></i>
+              <span>Stay focused with a clean desktop layout.</span>
+            </div>
+            <div class="feature-item">
+              <i class="fas fa-user-check"></i>
+              <span>Choose user or admin access in one place.</span>
+            </div>
+          </div>
+        </div>
 
-.login-box{
-width:400px;
-margin:120px auto;
-background:white;
-padding:30px;
-border-radius:10px;
-box-shadow:0 4px 10px rgba(0,0,0,0.1);
-}
+        <div class="login-form-panel">
+          <div class="login-header">
+            <i class="fas fa-user-check"></i>
+            <h2>Welcome Back</h2>
+            <p>Please login to your account</p>
+          </div>
 
-</style>
+          {% with messages=get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              <div class="alert alert-dismissible" style="margin-bottom: 16px; padding: 14px 16px; border-radius: 14px; background: rgba(255,255,255,0.95); color: #2a2a2a; border: 1px solid #e5e7eb;">
+                {% for category, message in messages %}
+                  <div>{{ message }}</div>
+                {% endfor %}
+              </div>
+            {% endif %}
+          {% endwith %}
 
-</head>
+          <form method="POST" id="loginForm">
+            <div class="form-group">
+              <label for="email"><i class="fas fa-envelope"></i> Email Address</label>
+              <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email" required />
+            </div>
 
-<body>
+            <div class="form-group">
+              <label for="password"><i class="fas fa-lock"></i> Password</label>
+              <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password" required />
+            </div>
 
-<div class="login-box">
+            <button type="submit" class="login-btn"><i class="fas fa-sign-in-alt" style="margin-right: 8px;"></i> Login</button>
+          </form>
 
-<h3 class="text-center mb-4">Candidate Login</h3>
+          <div class="divider">or</div>
 
-<form method="POST">
+          <div class="admin-link">
+            Need admin access? <a href="{{ url_for('admin_login') }}">Login as Admin</a>
+          </div>
 
-<div class="mb-3">
-<label>Email</label>
-<input type="email" name="email" class="form-control" required>
-</div>
+          <div class="register-link">
+            Don't have an account? <a href="/register">Create one here</a>
+          </div>
 
-<div class="mb-3">
-<label>Password</label>
-<input type="password" name="password" class="form-control" required>
-</div>
+          <div style="text-align: center; margin-bottom: 20px; font-size: 12px; color: #6b7280;">Login with</div>
 
-<button class="btn btn-primary w-100">
-Login
-</button>
+          <div class="social-links">
+            <a href="/auth/google" title="Login with Google" class="social-btn-google"><i class="fab fa-google"></i></a>
+            <a href="/auth/github" title="Login with GitHub" class="social-btn-github"><i class="fab fa-github"></i></a>
+            <a href="/auth/microsoft" title="Login with Microsoft" class="social-btn-microsoft"><i class="fab fa-microsoft"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
 
-<p class="text-center mt-3">
-New Candidate?
-<a href="/register">Register Here</a>
-</p>
-
-</form>
-
-</div>
-
-</body>
+    <script>
+      document.getElementById('loginForm').addEventListener('submit', function (e) {
+        const btn = this.querySelector('.login-btn')
+        btn.classList.add('loading')
+      })
+    </script>
+  </body>
 </html>

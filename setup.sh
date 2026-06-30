@@ -8,35 +8,35 @@ echo ""
 
 # Check if Python is installed
 if ! command -v python &> /dev/null; then
-    echo "❌ Python is not installed. Please install Python 3.8 or higher."
+    echo "❌ Python is not installed. Please install Python 3.12."
     exit 1
 fi
 
 # Check Python version
-PYTHON_VERSION=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
-REQUIRED_VERSION="3.8"
+PYTHON_VERSION=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>/dev/null)
+REQUIRED_VERSION="3.12"
 
-if [ "$(printf '%s\n' "$REQUIRED_VERSION" "$PYTHON_VERSION" | sort -V | head -n1)" != "$REQUIRED_VERSION" ]; then
-    echo "❌ Python $REQUIRED_VERSION or higher is required. You have Python $PYTHON_VERSION."
+if [ "$PYTHON_VERSION" != "$REQUIRED_VERSION" ]; then
+    echo "❌ Python $REQUIRED_VERSION is required. You have Python $PYTHON_VERSION."
+    echo "Please install Python 3.12 and rerun this script."
     exit 1
 fi
 
 echo "✅ Python $PYTHON_VERSION detected"
 
 # Create virtual environment if it doesn't exist
-if [ ! -d "venv" ]; then
+if [ ! -d ".venv-1" ]; then
     echo "📦 Creating virtual environment..."
-    python -m venv venv
+    python -m venv .venv-1
 fi
 
 # Activate virtual environment
 echo "🔄 Activating virtual environment..."
-source venv/Scripts/activate  # Windows
-# source venv/bin/activate    # macOS/Linux
+source .venv-1/bin/activate
 
 # Upgrade pip
-echo "⬆️  Upgrading pip..."
-pip install --upgrade pip
+echo "⬆️  Upgrading pip, setuptools, and wheel..."
+python -m pip install --upgrade pip setuptools wheel
 
 # Install dependencies
 echo "📚 Installing dependencies..."
@@ -58,7 +58,7 @@ echo ""
 echo "🎉 Setup complete!"
 echo ""
 echo "To run the application:"
-echo "1. Activate the virtual environment: venv\Scripts\activate (Windows) or source venv/bin/activate (macOS/Linux)"
+echo "1. Activate the virtual environment: source .venv-1/bin/activate"
 echo "2. Start the app: python app.py"
 echo "3. Open your browser: http://localhost:5000"
 echo ""

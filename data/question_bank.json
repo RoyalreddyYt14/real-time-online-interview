@@ -1,0 +1,47 @@
+{
+  "Python": [
+    "What is a list in Python and how do you use it?",
+    "Explain the difference between a list and a tuple in Python.",
+    "How do you handle exceptions in Python?",
+    "What is a dictionary in Python?",
+    "How do you define a function in Python?"
+  ],
+  "SQL": [
+    "What is SQL and what is it used for?",
+    "How do you retrieve all records from a table in SQL?",
+    "Explain the difference between WHERE and HAVING clauses.",
+    "What is a primary key in SQL?",
+    "How would you update data in a SQL table?"
+  ],
+  "Java": [
+    "What is a class in Java?",
+    "How do you write a basic for loop in Java?",
+    "What is inheritance in Java?",
+    "Explain the concept of method overloading in Java.",
+    "How do you declare an array in Java?"
+  ],
+  "C++": [
+    "What is the difference between a pointer and a reference in C++?",
+    "How do you write a simple 'Hello World' program in C++?",
+    "What is a constructor in C++?",
+    "Explain the use of 'namespace' in C++.",
+    "How do you declare a function in C++?"
+  ],
+  "HTML": [
+    "What does HTML stand for?",
+    "How do you create a hyperlink in HTML?",
+    "What is the purpose of the <head> tag in HTML?",
+    "What tag is used to insert an image in HTML?",
+    "How do you create a table in HTML?"
+  ],
+  "JavaScript": [
+    "How do you declare a variable in JavaScript?",
+    "What is the difference between == and === in JavaScript?",
+    "How do you write a function in JavaScript?",
+    "What is the DOM in JavaScript?",
+    "How do you add a comment in JavaScript?"
+  ],
+  "Datascienc": [
+    "Machine Learning\r\nWhat is Data Science?\r\nWhat is the difference between supervised and unsupervised learning?\r\nWhat is a training dataset and a test dataset?\r\nWhat is overfitting and how can it be prevented?\r\nWhat is underfitting?\r\nExplain the difference between classification and regression.\r\nWhat is cross-validation?\r\nWhat is the bias-variance tradeoff?\r\nWhat is the difference between precision and recall?\r\nWhat is the F1-score?\r\nPython and Data Handling\r\nWhat is a DataFrame in Pandas?\r\nWhat is the difference between a list and a NumPy array?\r\nHow do you handle missing values in a dataset?\r\nWhat are the advantages of using NumPy?\r\nWhat is feature scaling and why is it important?\r\nStatistics and Probability\r\nWhat is the difference between mean, median, and mode?\r\nWhat is standard deviation?\r\nWhat is the purpose of hypothesis testing?\r\nExplain the difference between correlation and causation.\r\nWhat is the Central Limit Theorem?\r\nAdditional Coding-Oriented Questions\r\nWrite a Python function to find the mean of a list of numbers.\r\nHow do you read a CSV file using Pandas?\r\nWhat is the difference between loc[] and iloc[] in Pandas?\r\nExplain the difference between Random Forest and Decision Tree.\r\nWhat is the purpose of feature engineering?"
+  ]
+}

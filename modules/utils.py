@@ -48,7 +48,7 @@ def save_uploaded_file(file, upload_folder, allowed_extensions):
     return filename
 
 
-def login_required(f):
+def login_required_route(f):
     """
     Decorator to require login for routes.
     """
@@ -198,6 +198,164 @@ def get_proctor_stop_file(user_id: int) -> str:
     from modules.config import INSTANCE_DIR
 
     return os.path.join(INSTANCE_DIR, f"proctor_stop_{user_id}.flag")
+
+
+def generate_interview_suggestions(user, warning_events, total_warnings):
+    """
+    Generate dynamic suggestions based on interview performance, resume, and warnings.
+
+    Args:
+        user: User object with scores and profile info
+        warning_events: List of warning events
+        total_warnings: Total number of warnings
+
+    Returns:
+        list: List of suggestion strings
+    """
+    suggestions = []
+
+    # Score-based suggestions
+    aptitude_score = user.aptitude_score or 0
+    technical_score = user.technical_score or 0
+    coding_score = user.coding_score or 0
+    hr_score = user.hr_score or 0
+    total_score = user.total_score()
+
+    # Aptitude suggestions
+    if aptitude_score < 10:
+        suggestions.append(
+            "📚 Focus on improving aptitude skills - practice logical reasoning, quantitative problems, and verbal ability tests regularly."
+        )
+    elif aptitude_score < 15:
+        suggestions.append(
+            "📈 Your aptitude performance is decent but could be better. Consider practicing more complex problem-solving scenarios."
+        )
+
+    # Technical suggestions
+    if technical_score < 10:
+        suggestions.append(
+            "🔧 Strengthen your technical knowledge base. Review core concepts in your field and practice technical interview questions."
+        )
+    elif technical_score < 15:
+        suggestions.append(
+            "⚙️ Good technical foundation! Focus on advanced topics and real-world application scenarios."
+        )
+
+    # Coding suggestions
+    if coding_score < 20:
+        suggestions.append(
+            "💻 Improve coding skills by practicing algorithms, data structures, and debugging techniques. Consider platforms like LeetCode or HackerRank."
+        )
+    elif coding_score < 30:
+        suggestions.append(
+            "🐛 Your coding is progressing well. Focus on code optimization, time/space complexity analysis, and clean code practices."
+        )
+
+    # HR/Communication suggestions
+    if hr_score < 10:
+        suggestions.append(
+            "🗣️ Work on communication skills. Practice articulating thoughts clearly, maintain eye contact, and show enthusiasm during interviews."
+        )
+    elif hr_score < 15:
+        suggestions.append(
+            "💬 Good communication skills! Focus on building confidence and practicing behavioral interview questions."
+        )
+
+    # Overall performance suggestions
+    if total_score < 50:
+        suggestions.append(
+            "🎯 Your overall performance needs significant improvement. Consider comprehensive interview preparation courses and mock interviews."
+        )
+    elif total_score < 70:
+        suggestions.append(
+            "📊 You're close to the selection threshold. Focus on weak areas and practice complete interview scenarios."
+        )
+
+    # Warning-based suggestions
+    if total_warnings > 10:
+        suggestions.append(
+            "🚨 High number of integrity warnings detected. Ensure a quiet, distraction-free environment for future interviews."
+        )
+    elif total_warnings > 5:
+        suggestions.append(
+            "⚠️ Multiple integrity warnings occurred. Minimize background noise and maintain consistent focus throughout the interview."
+        )
+
+    # Specific warning types
+    multiple_faces = sum(
+        1
+        for w in warning_events
+        if w and w.message and ("Multiple" in w.message or "multiple" in w.message)
+    )
+    no_face = sum(
+        1
+        for w in warning_events
+        if w and w.message and "not visible" in w.message.lower()
+    )
+    looking_away = sum(
+        1
+        for w in warning_events
+        if w and w.message and "looking away" in w.message.lower()
+    )
+
+    if multiple_faces > 0:
+        suggestions.append(
+            "👥 Multiple faces detected during interview. Ensure you're alone in a private space for future interviews."
+        )
+    if no_face > 3:
+        suggestions.append(
+            "👀 Face not visible multiple times. Position yourself properly in front of the camera and maintain consistent visibility."
+        )
+    if looking_away > 5:
+        suggestions.append(
+            "👁️ Frequent looking away detected. Stay focused on the screen and maintain engagement throughout the interview."
+        )
+
+    # Resume-based suggestions
+    if user.skills:
+        skills_list = user.skills.lower().split(",")
+        if len(skills_list) < 3:
+            suggestions.append(
+                "📄 Expand your skill set. Consider learning additional technologies relevant to your target role."
+            )
+    else:
+        suggestions.append(
+            "📋 Add more technical skills to your resume. Highlight relevant technologies and tools you're proficient in."
+        )
+
+    if not user.experience or len(user.experience.strip()) < 10:
+        suggestions.append(
+            "💼 Provide more detailed work experience on your profile. Include specific achievements and responsibilities."
+        )
+
+    if not user.education or len(user.education.strip()) < 5:
+        suggestions.append(
+            "🎓 Complete your education details. Include degree, institution, and graduation year."
+        )
+
+    # Time management suggestions
+    if total_warnings > 0:
+        suggestions.append(
+            "⏰ Practice time management during interviews. Complete sections within allocated time to avoid rushed responses."
+        )
+
+    # Confidence and preparation suggestions
+    if hr_score < 12 and total_warnings < 3:
+        suggestions.append(
+            "😊 Build confidence through mock interviews. Practice with friends or use online platforms to simulate real interview conditions."
+        )
+
+    # Final encouragement
+    if total_score >= 70:
+        suggestions.append(
+            "🎉 Great job! Continue practicing to maintain and improve your performance."
+        )
+    else:
+        suggestions.append(
+            "💪 Don't get discouraged. Use these suggestions to improve and try again. Consistent practice leads to success!"
+        )
+
+    return suggestions[:8]  # Limit to 8 most relevant suggestions
 
 
 def format_duration(seconds):

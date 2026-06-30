@@ -72,13 +72,30 @@ Do not move away from the camera.
 </p>
 
 <script>
+function updateStatus(text) {
+    document.getElementById("statusText").innerText = text;
+}
 
-// Auto update message after few seconds
-setTimeout(() => {
-    document.getElementById("statusText").innerText =
-    "Verifying your face... Please wait.";
-}, 3000);
+function checkFaceStatus() {
+    fetch("/face_verification/status")
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.completed) {
+                updateStatus("Face verified successfully! Redirecting...");
+                setTimeout(() => {
+                    window.location.href = "/dashboard";
+                }, 1800);
+            } else {
+                updateStatus(data.message || "Verifying your face... Please wait.");
+            }
+        })
+        .catch(() => {
+            updateStatus("Unable to reach verification status. Retrying...");
+        });
+}
 
+checkFaceStatus();
+setInterval(checkFaceStatus, 2500);
 </script>
 
 </body>

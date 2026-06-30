@@ -33,11 +33,29 @@ box-shadow:0 3px 10px rgba(0,0,0,0.1);
 
 <h3 class="mb-4">Complete Candidate Profile</h3>
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="alert alert-dismissible" style="margin-bottom: 16px; padding: 14px 16px; border-radius: 14px; background: rgba(240,248,255,0.9); color: #0b2c4d;">
+      {% for category, message in messages %}
+        <div>{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
 <form method="POST" enctype="multipart/form-data">
 
-<input type="text" name="phone" placeholder="Phone" class="form-control mb-2">
-<input type="text" name="education" placeholder="Education" class="form-control mb-2">
-<input type="text" name="experience" placeholder="Experience" class="form-control mb-2">
+<input type="text" name="phone" placeholder="Phone" class="form-control mb-2" value="{{ user.phone or '' }}">
+<input type="text" name="education" placeholder="Education" class="form-control mb-2" value="{{ user.education or '' }}">
+<input type="text" name="experience" placeholder="Experience" class="form-control mb-2" value="{{ user.experience or '' }}">
+
+{% if user.resume %}
+<div class="mb-3">
+  <div class="alert alert-success" role="alert">
+    Current resume uploaded: <strong>{{ user.resume.rsplit('/', 1)[-1] }}</strong>
+  </div>
+</div>
+{% endif %}
 
 <!-- 🔥 RESUME -->
 <div class="mb-3">

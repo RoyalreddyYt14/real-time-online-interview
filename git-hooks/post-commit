@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -e
+
+# Safe post-commit hook that updates project info/CHANGELOG.md
+# Behavior:
+# - If the commit message contains lines starting with 'CHANGELOG: ', those lines
+#   are appended as entries.
+# - Otherwise, falls back to the commit subject as a single changelog entry.
+
+ROOT=$(git rev-parse --show-toplevel 2>/dev/null || true)
+if [ -z "$ROOT" ]; then
+  exit 0
+fi
+cd "$ROOT" || exit 0
+
+commit_hash=$(git rev-parse --verify HEAD 2>/dev/null || true)
+if [ -z "$commit_hash" ]; then
+  exit 0
+fi
+
+commit_msg=$(git log -1 --pretty=%B "$commit_hash")
+
+# Collect CHANGELOG: prefixed lines
+mapfile -t changelog_entries < <(printf "%s\n" "$commit_msg" | grep -E '^CHANGELOG:[[:space:]]*' | sed -E 's/^CHANGELOG:[[:space:]]*//')
+
+# Fallback to subject if none found
+if [ ${#changelog_entries[@]} -eq 0 ]; then
+  subject=$(git log -1 --pretty=%s "$commit_hash")
+  if [ -n "$subject" ]; then
+    changelog_entries=("$subject")
+  fi
+fi
+
+if [ ${#changelog_entries[@]} -eq 0 ]; then
+  exit 0
+fi
+
+# Prefer python3, but allow plain python
+PY=python3
+if ! command -v "$PY" >/dev/null 2>&1; then
+  PY=python
+fi
+
+if ! command -v "$PY" >/dev/null 2>&1; then
+  echo "WARNING: no Python interpreter available; skipping changelog update." >&2
+  exit 0
+fi
+
+for entry in "${changelog_entries[@]}"; do
+  # Run but don't fail the commit hook if the updater fails
+  "$PY" update_changelog.py "$entry" || true
+done
+
+echo "Changelog updated from commit: ${commit_hash}" >&2

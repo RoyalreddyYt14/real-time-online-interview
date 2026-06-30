@@ -37,6 +37,10 @@ html[data-theme="dark"]{
   right: 14px;
   z-index: 1050;
   font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  pointer-events: none;
 }
 
 .rt-user-toggle{
@@ -54,6 +58,7 @@ html[data-theme="dark"]{
   box-shadow: 0 10px 30px rgba(0,0,0,0.06);
   cursor: pointer;
   transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+  pointer-events: auto;
 }
 
 .rt-user-toggle:active{
@@ -435,4 +440,30 @@ html[data-theme="dark"] .rt-toast-msg{
     width: calc(100vw - 20px);
   }
 }
+
+/* Accessibility overrides (enforced last) */
+.header, .header * {
+  color: var(--rt-text) !important;
+}
+.sidebar, .sidebar * {
+  color: var(--rt-text) !important;
+}
+.content, .content * {
+  color: var(--rt-text) !important;
+}
+.card, .card *,
+.dashboard-card, .dashboard-card *,
+.stat-card, .stat-card * {
+  color: var(--rt-text) !important;
+}
+.subtitle, .header small, .text-muted, .rt-notif-emoji, .rt-notif-count {
+  color: var(--rt-muted) !important;
+}
+a, .sidebar a {
+  color: var(--rt-primary) !important;
+}
+.sidebar a:hover, .sidebar a.active {
+  color: var(--rt-text) !important;
+}
+
 

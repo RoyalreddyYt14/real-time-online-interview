@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Email Diagnostics</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+{% include 'base.html' %}
+<div class="header">
+<div>
+<h4>REAL TIME ONLINE INTERVIEW</h4>
+<div class="subtitle">Email Diagnostics</div>
+</div>
+<div>
+<i class="bi bi-person-circle"></i> Admin
+</div>
+</div>
+<div class="sidebar">
+<a href="/admin" class="{{ 'active' if active_page == 'dashboard' else '' }}"><i class="bi bi-gear"></i> Admin Panel</a>
+<a href="/admin/questions" class="{{ 'active' if active_page == 'questions' else '' }}"><i class="bi bi-journal-text"></i> Manage Questions</a>
+<a href="/admin/interviews" class="{{ 'active' if active_page == 'interviews' else '' }}"><i class="bi bi-briefcase"></i> Manage Interviews</a>
+<a href="/admin/reports" class="{{ 'active' if active_page == 'reports' else '' }}"><i class="bi bi-bar-chart"></i> Reports</a>
+<a href="/admin/email-diagnostics" class="{{ 'active' if active_page == 'email_diagnostics' else '' }}"><i class="bi bi-envelope"></i> Email Diagnostics</a>
+<a href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
+</div>
+<div class="content">
+<h4>Email Diagnostics</h4>
+<div class="card p-4 mt-3">
+<h5>Configuration Status</h5>
+<p>
+{% if email_configured %}
+  <span class="badge bg-success">Configured</span>
+{% else %}
+  <span class="badge bg-danger">Not Configured</span>
+{% endif %}
+</p>
+{% if config_issues %}
+  <div class="alert alert-danger">
+    <h6>Issues detected:</h6>
+    <ul>
+      {% for issue in config_issues %}
+      <li>{{ issue }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% else %}
+  <div class="alert alert-success">
+    Email sending is properly configured.
+  </div>
+{% endif %}
+<p>
+Use <code>MAIL_USERNAME</code>/<code>MAIL_PASSWORD</code> or <code>SMTP_USERNAME</code>/<code>SMTP_PASSWORD</code>, or enable Gmail OAuth2 with the appropriate env vars.
+</p>
+</div>
+<div class="card p-4 mt-3">
+<h5>Helpful Notes</h5>
+<ul>
+  <li>For Gmail App Password: use <code>MAIL_USERNAME</code> and <code>MAIL_PASSWORD</code>.</li>
+  <li>For Gmail OAuth2: set <code>GMAIL_OAUTH2_ENABLED=True</code>, <code>GMAIL_OAUTH2_CLIENT_ID</code>, <code>GMAIL_OAUTH2_CLIENT_SECRET</code>, and <code>GMAIL_OAUTH2_TOKEN_FILE</code>.</li>
+  <li>Confirm the token file exists and is readable by the app.</li>
+</ul>
+</div>
+<a class="btn btn-secondary mt-3" href="{{ url_for('admin_dashboard') }}">Back to Admin Dashboard</a>
+</div>
+</body>
+</html>

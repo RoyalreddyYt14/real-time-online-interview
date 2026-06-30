@@ -1,0 +1,176 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Microphone & Speech Recognition Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        #meter {
+            width: 100%;
+            height: 20px;
+            background: #eee;
+            margin: 10px 0;
+        }
+
+        #level {
+            height: 100%;
+            width: 0%;
+            background: #4caf50;
+        }
+
+        button {
+            margin-right: 10px;
+        }
+
+        pre {
+            background: #f7f7f7;
+            padding: 10px;
+            max-height: 200px;
+            overflow: auto
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Microphone & Speech Recognition Test</h2>
+    <p>Use this page to verify browser microphone access and speech recognition.</p>
+    <div>
+        <button id="start">Start Test</button>
+        <button id="stop" disabled>Stop</button>
+    </div>
+    <div id="meter">
+        <div id="level"></div>
+    </div>
+    <p><strong>Recognition status:</strong> <span id="status">idle</span></p>
+    <p><strong>Last transcript:</strong></p>
+    <pre id="transcript">(none)</pre>
+    <p><strong>Console log (copy/paste here):</strong></p>
+    <pre id="log"></pre>
+
+    <script>
+        (async function () {
+            const startBtn = document.getElementById('start');
+            const stopBtn = document.getElementById('stop');
+            const statusEl = document.getElementById('status');
+            const transcriptEl = document.getElementById('transcript');
+            const logEl = document.getElementById('log');
+            const levelEl = document.getElementById('level');
+
+            function log(msg) {
+                console.log(msg);
+                logEl.textContent += msg + '\n';
+            }
+
+            let recognition = null;
+            let stream = null;
+            let audioCtx = null;
+            let meterNode = null;
+
+            async function start() {
+                log('Requesting microphone permission...');
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    log('Microphone permission granted.');
+                } catch (e) {
+                    log('getUserMedia error: ' + e);
+                    statusEl.textContent = 'mic-permission-denied';
+                    return;
+                }
+
+                // Audio level meter
+                try {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const source = audioCtx.createMediaStreamSource(stream);
+                    const analyser = audioCtx.createAnalyser();
+                    analyser.fftSize = 2048;
+                    source.connect(analyser);
+
+                    meterNode = { analyser };
+                    requestAnimationFrame(updateMeter);
+                } catch (e) {
+                    log('Audio meter init error: ' + e);
+                }
+
+                // Speech Recognition (Web Speech API)
+                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                    log('Web Speech API not available in this browser.');
+                    statusEl.textContent = 'no-web-speech-api';
+                    return;
+                }
+
+                const ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new ctor();
+                recognition.lang = 'en-US';
+                recognition.interimResults = true;
+                recognition.continuous = true;
+
+                recognition.onstart = () => { statusEl.textContent = 'listening'; log('Recognition started'); };
+                recognition.onerror = (e) => { statusEl.textContent = 'error'; log('Recognition error: ' + JSON.stringify(e)); };
+                recognition.onend = () => { statusEl.textContent = 'ended'; log('Recognition ended'); };
+                recognition.onresult = (evt) => {
+                    let text = '';
+                    for (let i = evt.resultIndex; i < evt.results.length; i++) {
+                        text += evt.results[i][0].transcript;
+                    }
+                    transcriptEl.textContent = text;
+                    log('Transcript update: ' + text);
+                };
+
+                try {
+                    recognition.start();
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                } catch (e) {
+                    log('Recognition start error: ' + e);
+                }
+            }
+
+            function updateMeter() {
+                if (!meterNode) return;
+                const analyser = meterNode.analyser;
+                const bufferLength = analyser.fftSize;
+                const data = new Uint8Array(bufferLength);
+                analyser.getByteTimeDomainData(data);
+                // compute RMS
+                let sum = 0;
+                for (let i = 0; i < data.length; i++) {
+                    const v = (data[i] - 128) / 128.0;
+                    sum += v * v;
+                }
+                const rms = Math.sqrt(sum / data.length);
+                const pct = Math.min(1, rms * 3);
+                levelEl.style.width = (pct * 100) + '%';
+                requestAnimationFrame(updateMeter);
+            }
+
+            function stop() {
+                if (recognition) {
+                    recognition.stop();
+                    recognition = null;
+                }
+                if (stream) {
+                    stream.getTracks().forEach(t => t.stop());
+                    stream = null;
+                }
+                if (audioCtx) {
+                    try { audioCtx.close(); } catch (e) { }
+                    audioCtx = null;
+                }
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                statusEl.textContent = 'stopped';
+                log('Stopped test');
+            }
+
+            startBtn.addEventListener('click', start);
+            stopBtn.addEventListener('click', stop);
+        })();
+    </script>
+</body>
+
+</html>

@@ -1,121 +1,135 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
+    <title>Coding Test</title>
 
-<title>Coding Test</title>
+    <style>
+      body {
+        font-family: Segoe UI, system-ui, -apple-system, Arial, sans-serif;
+        background: linear-gradient(180deg, #0b2c4d 0%, #06152d 100%);
+        color: #e6eef7;
+        padding: 60px 16px;
+        min-height: 100vh;
+      }
+      
+      .container {
+        background: rgba(255, 255, 255, 0.06);
+        padding: 30px;
+        border-radius: 16px;
+        max-width: 900px;
+        margin: auto;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+        animation: rtIn 280ms ease-out both;
+      }
+      
+      textarea {
+        width: 100%;
+        font-family: monospace;
+      }
+      
+      button {
+        padding: 10px 20px;
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+      }
+      
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 35px rgba(0, 0, 0, 0.25);
+        background: #1d4ed8;
+      }
+      
+      @keyframes rtIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px) scale(0.99);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+    </style>
+  </head>
 
-<style>
-body{
-font-family:Segoe UI, system-ui, -apple-system, Arial, sans-serif;
-background:linear-gradient(180deg,#0b2c4d 0%, #06152d 100%);
-color:#e6eef7;
-padding:60px 16px;
-min-height:100vh;
-}
+  <body>
+    {% include 'base.html' %}
 
-.container{
-background:rgba(255,255,255,0.06);
-padding:30px;
-border-radius:16px;
-max-width:900px;
-margin:auto;
-border:1px solid rgba(255,255,255,0.14);
-backdrop-filter: blur(12px);
- -webkit-backdrop-filter: blur(12px);
-box-shadow:0 18px 60px rgba(0,0,0,0.35);
-animation: rtIn 280ms ease-out both;
-}
+    <div class="container">
+      <h2>Coding Challenge</h2>
+      <div id="codeMsg" style="color:#dc3545;font-weight:700;margin-bottom:12px;"></div>
 
-textarea{
-width:100%;
-font-family:monospace;
-}
+      <form method="POST" action="/coding" id="codeForm" onsubmit="submitCode(event)">
+        <p>
+          <b>Questions:</b>
+        </p>
+        <ol>
+          {% for question in coding_questions %}
+            <li style="margin-bottom:22px;">
+              <div>
+                <b>Q{{ loop.index }}:</b> {{ question }}
+              </div>
+              <textarea name="answer_{{ loop.index0 }}" rows="8" placeholder="Write your code here" required style="width:100%;margin-top:8px;font-family:monospace;"></textarea>
+            </li>
+          {% endfor %}
+        </ol>
 
-button{
-padding:10px 20px;
-background:#2563eb;
-color:white;
-border:none;
-border-radius:12px;
-cursor:pointer;
-transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
-}
+        <input type="hidden" name="score" id="scoreInput" value="0" />
 
-button:hover{
-  transform: translateY(-2px);
-  box-shadow:0 14px 35px rgba(0,0,0,0.25);
-  background:#1d4ed8;
-}
+        <br />
 
-@keyframes rtIn{
-  from{opacity:0; transform: translateY(8px) scale(0.99);}
-  to{opacity:1; transform: translateY(0) scale(1);}
-}
-</style>
+        <button type="submit">Submit Answers</button>
+      </form>
+    </div>
 
-</head>
-
-<body>
-{% include 'base.html' %}
-
-<div class="container">
-
-<h2>Coding Challenge</h2>
-<div id="codeMsg" style="color:#dc3545;font-weight:700;margin-bottom:12px;"></div>
-
-<form method="POST" action="/coding" id="codeForm">
-
-<p><b>Question:</b></p>
-<p>Write a Python program to reverse a string.</p>
-
-<textarea name="code" id="code" rows="12" placeholder="Write your code here" required></textarea>
-
-<input type="hidden" name="score" id="scoreInput">
-
-<br><br>
-
-<button type="button" onclick="submitCode()">Submit Code</button>
-
-</form>
-
-</div>
-
-<script>
+    <script>
 
 // ✅ Keywords to check logic
-const keywords = ["reverse", "[::-1]", "for", "while"];
+const keywords = {{ coding_keywords | tojson }};
+const normalizedKeywords = keywords.map((word) => word.toLowerCase());
 
-// ✅ Submit Logic
-function submitCode(){
+function submitCode(event){
+    if (event) {
+      event.preventDefault();
+    }
 
-let code = document.getElementById("code").value.toLowerCase();
+    const textareas = Array.from(document.querySelectorAll("textarea[name^='answer_']"));
+    let score = 0;
+    let allFilled = true;
 
-if(code.trim() === ""){
-const msgEl = document.getElementById("codeMsg");
-if (msgEl) msgEl.textContent = "Please write your code.";
-return;
-}
+    textareas.forEach(area => {
+        const code = area.value.toLowerCase().trim();
+        if(!code){
+            allFilled = false;
+        }
+        normalizedKeywords.forEach(word => {
+            if(code.includes(word)){
+                score += 2;
+            }
+        });
+    });
 
-let score = 0;
+    if(!allFilled){
+        const msgEl = document.getElementById("codeMsg");
+        if (msgEl) msgEl.textContent = "Please answer all coding questions.";
+        return;
+    }
 
-// basic evaluation
-keywords.forEach(word => {
-if(code.includes(word)){
-score += 5;
-}
-});
+    const maxScore = textareas.length * 20;
+    if(score > maxScore) score = maxScore;
 
-// limit max score
-if(score > 30) score = 30;
-
-document.getElementById("scoreInput").value = score;
-
-// submit form
-document.getElementById("codeForm").submit();
+    document.getElementById("scoreInput").value = score;
+    document.getElementById("codeForm").submit();
 }
 
 
 </script>
-
-</body>
+  </body>
 </html>

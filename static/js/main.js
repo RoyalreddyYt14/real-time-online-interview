@@ -35,6 +35,7 @@
   let notificationCount = 0;
   let lastWarningCount = 0;
   let lastInterviewStatus = null;
+  let isInternalInterviewNavigation = false;
 
   function ensureGlobalLoader() {
     // Use existing page loader when present (dashboard/results templates).
@@ -346,6 +347,18 @@
         lastInterviewStatus = null;
       }
     }
+
+    // If the backend provided a server-side HR transcription, display it
+    try {
+      if (isInterviewPage && window.location.pathname === "/hr" && typeof data.hr_transcription !== "undefined") {
+        const liveEl = document.getElementById("hrSpokenLive");
+        if (liveEl) {
+          liveEl.textContent = data.hr_transcription && data.hr_transcription.length ? data.hr_transcription : "—";
+        }
+      }
+    } catch (e) {
+      // Don't block UI on errors
+    }
   }
 
   function setupNotifications() {
@@ -432,11 +445,68 @@
     );
   }
 
-  // If the user navigates away from an interview page, stop monitoring resources.
+  function normalizePath(path) {
+    if (!path) return "";
+    const url = path.split("?")[0].split("#")[0];
+    return url.endsWith("/") && url.length > 1 ? url.slice(0, -1) : url;
+  }
+
+  document.addEventListener("submit", (e) => {
+    try {
+      const form = e.target;
+      if (!form || !form.getAttribute) return;
+      const rawAction = form.getAttribute("action") || window.location.pathname;
+      const actionPath = normalizePath(new URL(rawAction, window.location.origin).pathname);
+      if (isInterviewPagePath(actionPath)) {
+        isInternalInterviewNavigation = true;
+      }
+    } catch (err) {}
+  });
+
+  document.addEventListener("click", (e) => {
+    try {
+      const link = e.target && e.target.closest ? e.target.closest("a") : null;
+      if (!link) return;
+
+      const href = link.getAttribute && link.getAttribute("href");
+      if (!href) return;
+      if (href.startsWith("#")) return;
+      if (href.startsWith("javascript:")) return;
+
+      const nextPath = normalizePath(new URL(href, window.location.origin).pathname);
+      if (isInterviewPagePath(nextPath) && isInterviewPagePath(window.location.pathname)) {
+        isInternalInterviewNavigation = true;
+      }
+
+      // Allow templates to opt-out if needed.
+      if (link.getAttribute("data-no-loader") === "true") return;
+
+      // Only show for same-origin navigations.
+      if (href.startsWith("/")) showPageLoader();
+    } catch (err) {}
+  });
+
+  // If the user leaves the interview flow entirely, stop monitoring resources.
   window.addEventListener("pagehide", () => {
     try {
-      const path = window.location && window.location.pathname ? window.location.pathname : "";
+      const path = normalizePath(
+        window.location && window.location.pathname ? window.location.pathname : ""
+      );
       if (!isInterviewPagePath(path)) return;
+      if (isInternalInterviewNavigation) {
+        isInternalInterviewNavigation = false;
+        return;
+      }
+
+      const navEntries = performance.getEntriesByType("navigation");
+      let navType = navEntries && navEntries[0] ? navEntries[0].type : null;
+      if (!navType && performance.navigation) {
+        navType = performance.navigation.type === 1 ? "reload" : navType;
+      }
+      if (navType === "reload" || navType === "back_forward") {
+        return;
+      }
+
       // Best-effort; backend verifies session role.
       fetch("/interview/exit", {
         method: "POST",
@@ -473,7 +543,43 @@
 
   window.addEventListener("load", () => {
     hidePageLoader();
+    startInterviewHeartbeat();
   });
+
+  function startInterviewHeartbeat() {
+    const path = normalizePath(
+      window.location && window.location.pathname ? window.location.pathname : ""
+    );
+
+    if (!isInterviewPagePath(path)) {
+      return; // Not on an interview page; don't start heartbeat.
+    }
+
+    // Poll every 15 seconds to keep camera monitoring alive.
+    const heartbeatInterval = setInterval(() => {
+      const currentPath = normalizePath(
+        window.location && window.location.pathname ? window.location.pathname : ""
+      );
+
+      // Stop polling if the user has left interview pages.
+      if (!isInterviewPagePath(currentPath)) {
+        clearInterval(heartbeatInterval);
+        return;
+      }
+
+      // Send heartbeat to backend to keep proctoring alive.
+      try {
+        fetch("/interview/heartbeat", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: "{}",
+        });
+      } catch (e) {
+        // Silent; network error is non-critical.
+      }
+    }, 15000); // 15 seconds
+  }
 
   setupDropdown();
   setupNotifications();
@@ -481,74 +587,6 @@
   setupSocket();
 })();
 
-// =======================
-// VOICE RECOGNITION FIX
-// =======================
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-if (SpeechRecognition) {
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = false;
-    recognition.lang = "en-US";
-
-    recognition.onstart = () => {
-        console.log("🎤 Voice started");
-    };
-
-    recognition.onresult = (event) => {
-        let transcript = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-            transcript += event.results[i][0].transcript;
-        }
-
-        console.log("User said:", transcript);
-
-        // 👉 OPTIONAL: auto-fill input box
-        let input = document.querySelector("#answerBox");
-        if (input) {
-            input.value = transcript;
-        }
-    };
-
-    recognition.onerror = (event) => {
-        console.error("Voice error:", event.error);
-    };
-
-    // 👉 OPTIONAL: start automatically
-    // recognition.start();
-
-} else {
-    console.log("❌ Speech Recognition not supported");
-}
-
-// =========================
-// 🎤 VOICE INPUT FUNCTION (HR ROUND)
-// =========================
-// function startVoice() {
-//     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-//     if (!SpeechRecognition) {
-//         alert("Voice not supported on this device. Please type your answer.");
-//         return;
-//     }
-
-//     const recognition = new SpeechRecognition();
-//     recognition.lang = "en-US";
-
-//     recognition.onstart = () => {
-//         console.log("🎤 Listening...");
-//     };
-
-//     recognition.onresult = (event) => {
-//         const text = event.results[0][0].transcript;
-
-//         // Put voice text into textarea
-//         const textarea = document.querySelector("textarea");
-//         if (textarea) {
-//             textarea.value = text;
-//         }
-//     };
-
-//     recognition.start();
-// }
+// Note: speech recognition is managed per-page (templates/hr.html) to
+// avoid creating duplicate recognition objects. Any page-level helper
+// here must not instantiate or start SpeechRecognition for the HR flow.

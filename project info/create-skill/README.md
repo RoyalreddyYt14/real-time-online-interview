@@ -12,11 +12,20 @@ A comprehensive web-based interview platform built with Flask that conducts auto
 - **Face Verification**: AI-powered face recognition and verification
 - **Automated Scoring**: Intelligent evaluation across all interview stages
 
+## 🧩 Recent Updates
+
+- Fixed admin login by ensuring `ADMIN_PASSWORD_HASH` is imported correctly in `app.py`.
+- Updated results page to display dynamic interview date, time, and ID from actual `InterviewAttempt` records.
+- Converted UTC stored timestamps to local timezone before rendering interview time.
+- Verified full end-to-end candidate workflow: registration, aptitude, technical, coding, HR, and final results.
+
 ## 📋 Prerequisites
 
-- Python 3.8 or higher
+- Python 3.11 or 3.12 (64-bit recommended)
 - Webcam (for proctoring features)
 - Modern web browser
+
+> Note: Python 3.14 is very new and may not yet have compatible prebuilt wheels for `numpy` / `opencv-python` on Windows.
 
 ## 🛠️ Installation
 
@@ -27,23 +36,43 @@ A comprehensive web-based interview platform built with Flask that conducts auto
    cd real_time_online_interview
    ```
 
+   On Windows, you can also run the provided setup script after installing Python 3.12:
+
+   ```bash
+   setup.bat
+   ```
+
 2. **Create a virtual environment:**
 
    ```bash
-   python -m venv venv
+   python -m venv .venv
    # On Windows:
-   venv\Scripts\activate
+   .venv\Scripts\activate
    # On macOS/Linux:
-   source venv/bin/activate
+   source .venv/bin/activate
    ```
 
-3. **Install dependencies:**
+   If you have the Windows Python launcher installed, you can also use:
+
+   ```bash
+   py -3.12 -m venv .venv
+   ```
+
+> Tip: If you already have an active virtual environment, deactivate it first before creating a new one.
+
+3. **Upgrade pip and wheel first:**
+
+   ```bash
+   python -m pip install --upgrade pip setuptools wheel
+   ```
+
+4. **Install dependencies:**
 
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Download YOLO model:**
+5. **Download YOLO model:**
    - The `yolov8n.pt` file should be included in the repository
    - If missing, download from: https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8n.pt
 
