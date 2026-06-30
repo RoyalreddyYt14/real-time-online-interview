@@ -1,3 +1,7 @@
+## 2026-06-30
+
+- Added email module, admin features, voice detection improvements, and project updates
+
 # Changelog
 
 ## 2026-06-08
