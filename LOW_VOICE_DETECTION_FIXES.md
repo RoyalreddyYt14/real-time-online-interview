@@ -1,9 +1,14 @@
 # 🎯 Low Voice Detection - COMPREHENSIVE FIX
 
+**Updated on:** 2026-07-02
+**Project:** Real-Time AI-Powered Online Interview System
+
 ## Problem Identified
+
 Voice was not being detected, especially low/soft voices. The system would timeout waiting for speech or fail to recognize quiet voices.
 
 ## Root Causes Found
+
 1. **Pause Threshold Too High (1.8s)** - System waited too long for silence, causing timeouts before low voices completed speaking
 2. **Non-Speaking Duration Too High (0.6s)** - Natural pauses in speech were being treated as end-of-speech
 3. **Energy Threshold Not Low Enough** - Set to 60, but needed to be much lower for soft voices
@@ -15,6 +20,7 @@ Voice was not being detected, especially low/soft voices. The system would timeo
 ### ✅ 1. Voice Configuration (`voice_config.py`)
 
 #### Energy Thresholds (CRITICAL)
+
 ```
 INITIAL_ENERGY_THRESHOLD: 60 → 30  (⚡ Ultra-low sensitivity)
 MIN_ENERGY_THRESHOLD: 25 → 15       (Minimum for whispers)
@@ -22,35 +28,41 @@ MAX_ENERGY_THRESHOLD: 140 → 100     (Cap for low-voice environments)
 ```
 
 **Why This Works:**
+
 - Lower threshold = more sensitive to quiet speech
 - Energy threshold of 30 is extremely sensitive (default is 300)
 - Min of 15 catches even whispers
 - Max of 100 prevents noise from breaking detection
 
 #### Listening Timeouts (EXTENDED)
+
 ```
 LISTEN_TIMEOUT: 18s → 25s          (More time for slow/soft speakers)
 PHRASE_TIME_LIMIT: 28s → 35s       (Allow longer complete answers)
 ```
 
 #### Pause Detection (CRITICAL)
+
 ```
 PAUSE_THRESHOLD: 1.8s → 0.5s       (⚡ 3.6x faster detection!)
 NON_SPEAKING_DURATION: 0.6s → 0.25s  (⚡ 2.4x faster detection!)
 ```
 
 **Why This Works:**
+
 - 1.8s pause threshold caused system to wait too long
 - Low voices have longer inter-word pauses naturally
 - 0.5s is optimal for detecting end-of-phrase without cutting mid-sentence
 - 0.25s allows natural speech pauses without cutting
 
 #### Phrase Detection (ULTRA-SENSITIVE)
+
 ```
 PHRASE_THRESHOLD: 0.02s → 0.01s    (Ultra-sensitive to short words)
 ```
 
 #### Retry Logic (MORE AGGRESSIVE)
+
 ```
 MAX_RETRIES: 3 → 5                  (More attempts for low voices)
 ```
@@ -58,6 +70,7 @@ MAX_RETRIES: 3 → 5                  (More attempts for low voices)
 ### ✅ 2. Audio Processor (`audio_processor.py`)
 
 #### Improved Calibration
+
 ```python
 def calibrate_microphone():
     - AGGRESSIVE threshold capping to MAX_ENERGY_THRESHOLD
@@ -66,11 +79,13 @@ def calibrate_microphone():
 ```
 
 **Why This Works:**
+
 - Ensures calibration doesn't set threshold too high
 - Fallback prevents system lockout if calibration fails
 - Multiple strategies ensure detection works
 
 #### Enhanced Recognize Speech Method
+
 ```python
 def recognize_speech():
     - Lowers threshold on each retry (up to MIN_ENERGY_THRESHOLD)
@@ -80,12 +95,14 @@ def recognize_speech():
 ```
 
 **Why This Works:**
+
 - Gets progressively more sensitive with each retry
 - Waits briefly between retries for audio to settle
 - Detailed error tracking helps diagnose issues
 - Multiple fallback strategies (Google → PocketSphinx)
 
 #### Recognizer Configuration
+
 ```python
 def _configure_recognizer_for_low_voice():
     - Ultra-low energy_threshold from VoiceConfig
@@ -98,17 +115,20 @@ def _configure_recognizer_for_low_voice():
 ### ✅ 3. Voice Interview Loop (`voice_interview.py`)
 
 #### Pre-Question Calibration (NEW)
+
 ```python
 # 3s calibration BEFORE listening for each question
 audio_processor.calibrate_microphone(duration=3)
 ```
 
 **Why This Helps:**
+
 - Adapts to room acoustics before listening
 - Ensures threshold is optimized for current environment
 - 3s duration provides stable low-voice calibration
 
 #### Aggressive Recalibration on Silence (ENHANCED)
+
 ```python
 # On each silence timeout:
 1. Recalibrate with 3s duration
@@ -117,11 +137,13 @@ audio_processor.calibrate_microphone(duration=3)
 ```
 
 **Why This Helps:**
+
 - If voice isn't detected, system adapts more aggressively
 - Progressively increases sensitivity
 - Explains what's happening to user
 
 #### Better User Feedback
+
 ```python
 "Please speak louder or clearer"  (instead of generic "didn't catch that")
 ```
@@ -133,7 +155,7 @@ Added ultra-aggressive profiles for different scenarios:
 ```
 PROFILES:
 - 'quiet_environment': threshold=40, pause=0.5s
-- 'noisy_environment': threshold=80, pause=0.5s  
+- 'noisy_environment': threshold=80, pause=0.5s
 - 'aggressive_detection': threshold=20, pause=0.4s (⚡ extreme sensitivity)
 - 'whisper_detection': threshold=15, pause=0.3s (⚡ maximum sensitivity for whispers)
 ```
@@ -141,13 +163,17 @@ PROFILES:
 ## How to Use the Fixes
 
 ### Default (Automatic)
+
 The system now uses optimal settings by default:
+
 ```bash
 python voice_interview.py <user_id>
 ```
 
 ### For Very Low Voices (if still having issues)
+
 Temporarily set environment variable:
+
 ```bash
 # Windows PowerShell
 $env:AUDIO_VOICE_PROFILE = "aggressive_detection"
@@ -159,6 +185,7 @@ python voice_interview.py <user_id>
 ```
 
 ### For Testing
+
 ```bash
 # List available microphones
 python audio_diagnostic.py --list
@@ -184,17 +211,18 @@ python audio_diagnostic.py --test --offline
 
 ## Performance Impact
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|------------|
-| Low Voice Detection | ❌ Fails | ✅ Works | 100% |
-| Pause Tolerance | 1.8s | 0.5s | 3.6x faster |
-| Min Sensitivity | 25 | 15 | More sensitive |
-| Max Timeout | 18s | 25s | 39% longer |
-| Retry Attempts | 3 | 5 | 67% more attempts |
+| Metric              | Before   | After    | Improvement       |
+| ------------------- | -------- | -------- | ----------------- |
+| Low Voice Detection | ❌ Fails | ✅ Works | 100%              |
+| Pause Tolerance     | 1.8s     | 0.5s     | 3.6x faster       |
+| Min Sensitivity     | 25       | 15       | More sensitive    |
+| Max Timeout         | 18s      | 25s      | 39% longer        |
+| Retry Attempts      | 3        | 5        | 67% more attempts |
 
 ## Testing Low Voice Detection
 
 ### Test Scenario 1: Soft Voice
+
 ```bash
 1. Run: python voice_interview.py test_user_1
 2. Speak very softly (as if telling a secret)
@@ -202,6 +230,7 @@ python audio_diagnostic.py --test --offline
 ```
 
 ### Test Scenario 2: Quick Speech
+
 ```bash
 1. Run: python voice_interview.py test_user_2
 2. Give quick 1-2 word answers
@@ -209,6 +238,7 @@ python audio_diagnostic.py --test --offline
 ```
 
 ### Test Scenario 3: Natural Pauses
+
 ```bash
 1. Run: python voice_interview.py test_user_3
 2. Speak with natural pauses between thoughts
@@ -220,12 +250,14 @@ python audio_diagnostic.py --test --offline
 ### Still Not Detecting Voice?
 
 1. **Check Microphone Level:**
+
    ```bash
    python audio_diagnostic.py --list
    python audio_diagnostic.py --test --device <your_device_index>
    ```
 
 2. **Try Whisper Detection Profile:**
+
    ```bash
    $env:AUDIO_VOICE_PROFILE = "whisper_detection"
    python voice_interview.py <user_id>
@@ -250,6 +282,7 @@ python audio_diagnostic.py --test --offline
 ## Summary
 
 This comprehensive fix addresses low-voice detection from multiple angles:
+
 1. **Ultra-low energy threshold** for maximum sensitivity
 2. **Fast pause detection** to avoid timeouts
 3. **Aggressive calibration** for environment adaptation
@@ -260,5 +293,6 @@ This comprehensive fix addresses low-voice detection from multiple angles:
 The system is now **dramatically more sensitive** to quiet voices while maintaining accuracy for normal volume speech.
 
 ---
-**Last Updated:** 2025-06-21
+
+**Last Updated:** 2026-07-02
 **Status:** ✅ Production Ready

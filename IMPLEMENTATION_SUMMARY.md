@@ -2,7 +2,10 @@
 
 ## Summary of Work Done
 
-I've fixed the low-voice detection issue with a complete overhaul of the voice recognition system.
+The project’s voice interview workflow has been improved with a focused update to low-voice detection, audio capture reliability, and interview flow stability.
+
+**Updated on:** 2026-07-02
+**Scope:** Project documentation and implementation notes for the real-time online interview system
 
 ---
 
@@ -373,7 +376,6 @@ All changes are fully backward compatible:
 - **Configuration:** Set `MAIL_USERNAME` and `MAIL_PASSWORD` in your environment (see `.env.example`); for Gmail use an App Password.
 - **Fallback:** If credentials are not set the helpers safely skip sending and log a warning.
 
-
 ---
 
 ## 📞 Support
@@ -403,12 +405,12 @@ Voice detection is now production-ready with:
 
 ## ⚙️ Recent Client-side Fixes (Applied)
 
-- Date: 2026-06-16
+- Date: 2026-07-02
 - Files changed: `templates/hr.html`
 - Changes made:
-   - Use whole-word stop keyword detection to avoid stripping substrings from normal words (e.g., "finished").
-   - Replace `.replace(/finish|done|stop/gi, "")` with word-boundary regex `.replace(/\b(?:finish|done|stop)\b/gi, "")`.
-   - Stop the browser SpeechRecognition before speaking TTS to prevent the recognizer capturing TTS audio.
-   - Ran headless interview test (`python voice_interview.py 123 --headless-test`) — flow completed and answers saved.
+  - Use whole-word stop keyword detection to avoid stripping substrings from normal words (e.g., "finished").
+  - Replace `.replace(/finish|done|stop/gi, "")` with word-boundary regex `.replace(/\b(?:finish|done|stop)\b/gi, "")`.
+  - Stop the browser SpeechRecognition before speaking TTS to prevent the recognizer capturing TTS audio.
+  - Ran headless interview test (`python voice_interview.py 123 --headless-test`) — flow completed and answers saved.
 
 If you'd like, I can extract this as a separate `CLIENT_CHANGES.md` file.
